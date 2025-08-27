@@ -1,29 +1,12 @@
-import { useState } from "react";
 import { DollarSign, TrendingUp, Calculator, PiggyBank } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useData } from "@/contexts/DataContext";
+import { Navigation } from "./Navigation";
 import { IncomeForm } from "./IncomeForm";
 import { ExpenseForm } from "./ExpenseForm";
 
-interface Income {
-  id: string;
-  date: string;
-  doordash: number;
-  ubereats: number;
-  didi: number;
-  coles: number;
-}
-
-interface Expense {
-  id: string;
-  date: string;
-  name: string;
-  amount: number;
-}
-
 export function Dashboard() {
-  const [incomes, setIncomes] = useState<Income[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [taxRate, setTaxRate] = useState(20);
+  const { incomes, expenses, taxRate, addIncome, addExpense } = useData();
 
   // Calculate totals
   const totalIncome = incomes.reduce((sum, income) => 
@@ -39,28 +22,15 @@ export function Dashboard() {
   const taxAmount = (gigIncome * taxRate) / 100;
   const netIncome = totalIncome - totalExpenses - taxAmount;
 
-  const handleIncomeAdd = (income: Omit<Income, 'id'>) => {
-    const newIncome = {
-      ...income,
-      id: Date.now().toString()
-    };
-    setIncomes([...incomes, newIncome]);
-  };
-
-  const handleExpenseAdd = (expense: Omit<Expense, 'id'>) => {
-    const newExpense = {
-      ...expense,
-      id: Date.now().toString()
-    };
-    setExpenses([...expenses, newExpense]);
-  };
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20">
-      <header className="mb-8">
+      <header className="mb-6">
         <h1 className="text-3xl font-bold text-foreground mb-2">GigZen Tracker</h1>
         <p className="text-muted-foreground">Track your gig income and expenses</p>
       </header>
+
+      <Navigation />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4 mb-8">
@@ -123,12 +93,12 @@ export function Dashboard() {
 
       {/* Income Form */}
       <div className="mb-8">
-        <IncomeForm onIncomeAdd={handleIncomeAdd} />
+        <IncomeForm onIncomeAdd={addIncome} />
       </div>
 
       {/* Expense Form */}
       <div className="mb-8">
-        <ExpenseForm onExpenseAdd={handleExpenseAdd} />
+        <ExpenseForm onExpenseAdd={addExpense} />
       </div>
 
       {/* Recent Transactions */}
