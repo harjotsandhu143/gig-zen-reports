@@ -30,8 +30,13 @@ export function Dashboard() {
     sum + income.doordash + income.ubereats + income.didi + income.coles, 0
   );
   
+  // Calculate gig income (excluding Coles - no tax on employment income)
+  const gigIncome = incomes.reduce((sum, income) => 
+    sum + income.doordash + income.ubereats + income.didi, 0
+  );
+  
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const taxAmount = (totalIncome * taxRate) / 100;
+  const taxAmount = (gigIncome * taxRate) / 100;
   const netIncome = totalIncome - totalExpenses - taxAmount;
 
   const handleIncomeAdd = (income: Omit<Income, 'id'>) => {
