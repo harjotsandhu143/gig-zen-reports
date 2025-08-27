@@ -23,7 +23,7 @@ interface Expense {
 export function Dashboard() {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [taxRate, setTaxRate] = useState(25);
+  const [taxRate, setTaxRate] = useState(20);
 
   // Calculate totals
   const totalIncome = incomes.reduce((sum, income) => 
