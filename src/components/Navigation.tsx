@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Home } from 'lucide-react';
+import { BarChart3, Home, Settings, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useData } from '@/contexts/DataContext';
 
 export function Navigation() {
   const location = useLocation();
+  const { taxRate, setTaxRate, resetData } = useData();
 
   return (
     <nav className="flex gap-2 mb-6">
@@ -26,6 +28,22 @@ export function Navigation() {
           <BarChart3 className="h-4 w-4" />
           Data Table
         </Link>
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setTaxRate(taxRate === 20 ? 30 : 20)}
+      >
+        <Settings className="h-4 w-4 mr-1" />
+        Tax: {taxRate}%
+      </Button>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={resetData}
+      >
+        <RotateCcw className="h-4 w-4 mr-1" />
+        Reset
       </Button>
     </nav>
   );

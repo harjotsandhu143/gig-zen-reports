@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface Income {
   id: string;
@@ -23,14 +23,24 @@ interface DataContextType {
   setTaxRate: (rate: number) => void;
   addIncome: (income: Omit<Income, 'id'>) => void;
   addExpense: (expense: Omit<Expense, 'id'>) => void;
+  resetData: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  const [incomes, setIncomes] = useState<Income[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [taxRate, setTaxRate] = useState(20);
+  const [incomes, setIncomes] = useState<Income[]>(() => {
+    const saved = localStorage.getItem('gigzen-incomes');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    const saved = localStorage.getItem('gigzen-expenses');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [taxRate, setTaxRate] = useState(() => {
+    const saved = localStorage.getItem('gigzen-taxrate');
+    return saved ? parseFloat(saved) : 20;
+  });
 
   const addIncome = (income: Omit<Income, 'id'>) => {
     const newIncome = {
@@ -48,6 +58,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setExpenses(prev => [...prev, newExpense]);
   };
 
+  const resetData = () => {
+    setIncomes([]);
+    setExpenses([]);
+    setTaxRate(20);
+    localStorage.removeItem('gigzen-incomes');
+    localStorage.removeItem('gigzen-expenses');
+    localStorage.removeItem('gigzen-taxrate');
+  };
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('gigzen-incomes', JSON.stringify(incomes));
+  }, [incomes]);
+
+  useEffect(() => {
+    localStorage.setItem('gigzen-expenses', JSON.stringify(expenses));
+  }, [expenses]);
+
+  useEffect(() => {
+    localStorage.setItem('gigzen-taxrate', taxRate.toString());
+  }, [taxRate]);
+
   return (
     <DataContext.Provider value={{
       incomes,
@@ -55,7 +87,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       taxRate,
       setTaxRate,
       addIncome,
-      addExpense
+      addExpense,
+      resetData
     }}>
       {children}
     </DataContext.Provider>
