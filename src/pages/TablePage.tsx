@@ -10,9 +10,29 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TablePage() {
-  const { incomes, expenses } = useData();
+  const { incomes, expenses, deleteIncome, deleteExpense } = useData();
+  const { toast } = useToast();
+
+  const handleDeleteIncome = (id: string, date: string) => {
+    deleteIncome(id);
+    toast({
+      title: "Income Deleted",
+      description: `Income record for ${date} has been removed.`,
+    });
+  };
+
+  const handleDeleteExpense = (id: string, name: string) => {
+    deleteExpense(id);
+    toast({
+      title: "Expense Deleted", 
+      description: `Expense "${name}" has been removed.`,
+    });
+  };
 
   // Combine and sort all transactions by date
   const allTransactions = [
@@ -56,6 +76,7 @@ export default function TablePage() {
                     <TableHead>DiDi</TableHead>
                     <TableHead>Coles</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -68,6 +89,16 @@ export default function TablePage() {
                       <TableCell>${income.coles.toFixed(2)}</TableCell>
                       <TableCell className="text-right font-bold text-success">
                         ${(income.doordash + income.ubereats + income.didi + income.coles).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteIncome(income.id, income.date)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -92,6 +123,7 @@ export default function TablePage() {
                     <TableHead>Date</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -101,6 +133,16 @@ export default function TablePage() {
                       <TableCell>{expense.name}</TableCell>
                       <TableCell className="text-right font-bold text-warning">
                         ${expense.amount.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteExpense(expense.id, expense.name)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

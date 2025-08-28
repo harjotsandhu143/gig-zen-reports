@@ -23,6 +23,8 @@ interface DataContextType {
   setTaxRate: (rate: number) => void;
   addIncome: (income: Omit<Income, 'id'>) => void;
   addExpense: (expense: Omit<Expense, 'id'>) => void;
+  deleteIncome: (id: string) => void;
+  deleteExpense: (id: string) => void;
   resetData: () => void;
 }
 
@@ -43,11 +45,30 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   });
 
   const addIncome = (income: Omit<Income, 'id'>) => {
-    const newIncome = {
-      ...income,
-      id: Date.now().toString()
-    };
-    setIncomes(prev => [...prev, newIncome]);
+    setIncomes(prev => {
+      // Check if income already exists for this date
+      const existingIndex = prev.findIndex(existing => existing.date === income.date);
+      
+      if (existingIndex !== -1) {
+        // Update existing record by adding amounts
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          doordash: updated[existingIndex].doordash + income.doordash,
+          ubereats: updated[existingIndex].ubereats + income.ubereats,
+          didi: updated[existingIndex].didi + income.didi,
+          coles: updated[existingIndex].coles + income.coles
+        };
+        return updated;
+      } else {
+        // Create new income record
+        const newIncome = {
+          ...income,
+          id: Date.now().toString()
+        };
+        return [...prev, newIncome];
+      }
+    });
   };
 
   const addExpense = (expense: Omit<Expense, 'id'>) => {
@@ -56,6 +77,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       id: Date.now().toString()
     };
     setExpenses(prev => [...prev, newExpense]);
+  };
+
+  const deleteIncome = (id: string) => {
+    setIncomes(prev => prev.filter(income => income.id !== id));
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(expense => expense.id !== id));
   };
 
   const resetData = () => {
@@ -88,6 +117,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setTaxRate,
       addIncome,
       addExpense,
+      deleteIncome,
+      deleteExpense,
       resetData
     }}>
       {children}
