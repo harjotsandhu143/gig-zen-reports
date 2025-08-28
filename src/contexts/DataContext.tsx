@@ -50,14 +50,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       const existingIndex = prev.findIndex(existing => existing.date === income.date);
       
       if (existingIndex !== -1) {
-        // Update existing record by adding amounts
+        // Update existing record with different behavior per platform
         const updated = [...prev];
+        const existing = updated[existingIndex];
         updated[existingIndex] = {
-          ...updated[existingIndex],
-          doordash: updated[existingIndex].doordash + income.doordash,
-          ubereats: updated[existingIndex].ubereats + income.ubereats,
-          didi: updated[existingIndex].didi + income.didi,
-          coles: updated[existingIndex].coles + income.coles
+          ...existing,
+          // DoorDash: Add to previous value
+          doordash: existing.doordash + income.doordash,
+          // Others: Replace previous value (only if new value > 0)
+          ubereats: income.ubereats > 0 ? income.ubereats : existing.ubereats,
+          didi: income.didi > 0 ? income.didi : existing.didi,
+          coles: income.coles > 0 ? income.coles : existing.coles
         };
         return updated;
       } else {
