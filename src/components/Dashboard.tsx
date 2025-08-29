@@ -26,7 +26,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background p-4 pb-20">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">GigZen Tracker</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Income Tracker</h1>
         <p className="text-muted-foreground">Track your gig income and expenses</p>
       </header>
 
