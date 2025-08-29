@@ -19,7 +19,8 @@ export function Dashboard() {
   );
   
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const taxAmount = (gigIncome * taxRate) / 100;
+  const taxableIncome = Math.max(0, gigIncome - totalExpenses); // Don't tax negative income
+  const taxAmount = (taxableIncome * taxRate) / 100;
   const netIncome = totalIncome - totalExpenses - taxAmount;
 
 
