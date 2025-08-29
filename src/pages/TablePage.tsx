@@ -80,7 +80,9 @@ export default function TablePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {incomes.map((income) => (
+                  {incomes
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map((income) => (
                     <TableRow key={income.id}>
                       <TableCell className="font-medium">{income.date}</TableCell>
                       <TableCell>${income.doordash.toFixed(2)}</TableCell>
@@ -127,7 +129,9 @@ export default function TablePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expenses.map((expense) => (
+                  {expenses
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell className="font-medium">{expense.date}</TableCell>
                       <TableCell>{expense.name}</TableCell>

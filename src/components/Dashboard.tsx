@@ -114,7 +114,10 @@ export function Dashboard() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {incomes.slice(-5).map((income) => (
+            {incomes
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 5)
+              .map((income) => (
               <Card key={income.id} className="stats-card">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
@@ -135,7 +138,10 @@ export function Dashboard() {
               </Card>
             ))}
             
-            {expenses.slice(-5).map((expense) => (
+            {expenses
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 5)
+              .map((expense) => (
               <Card key={expense.id} className="stats-card">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
