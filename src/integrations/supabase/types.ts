@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      incomes: {
+        Row: {
+          coles: number | null
+          created_at: string
+          date: string
+          didi: number | null
+          doordash: number | null
+          id: string
+          ubereats: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coles?: number | null
+          created_at?: string
+          date: string
+          didi?: number | null
+          doordash?: number | null
+          id?: string
+          ubereats?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coles?: number | null
+          created_at?: string
+          date?: string
+          didi?: number | null
+          doordash?: number | null
+          id?: string
+          ubereats?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -33,6 +99,30 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          tax_rate: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tax_rate?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tax_rate?: number | null
           updated_at?: string
           user_id?: string
         }
