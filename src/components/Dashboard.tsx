@@ -6,7 +6,18 @@ import { IncomeForm } from "./IncomeForm";
 import { ExpenseForm } from "./ExpenseForm";
 
 export function Dashboard() {
-  const { incomes, expenses, taxRate, addIncome, addExpense } = useData();
+  const { incomes, expenses, taxRate, loading, addIncome, addExpense } = useData();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your data...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate totals
   const totalIncome = incomes.reduce((sum, income) => 

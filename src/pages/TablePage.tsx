@@ -16,8 +16,19 @@ import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function TablePage() {
-  const { incomes, expenses, deleteIncome, deleteExpense } = useData();
+  const { incomes, expenses, loading, deleteIncome, deleteExpense } = useData();
   const { toast } = useToast();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleDeleteIncome = (id: string, date: string) => {
     deleteIncome(id);
