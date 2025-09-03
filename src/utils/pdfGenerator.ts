@@ -45,7 +45,7 @@ export const generateFinancialReport = (
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const netIncome = totalIncome - totalExpenses;
   const estimatedTax = (netIncome * taxRate) / 100;
-  const didiGstAmount = Math.max(0, (didiIncome - totalExpenses) * 0.1);
+  const didiGstAmount = (didiIncome - totalExpenses) * 0.1;
   const afterTaxIncome = netIncome - estimatedTax;
   
   // Summary section

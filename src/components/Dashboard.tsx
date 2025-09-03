@@ -39,7 +39,7 @@ export function Dashboard() {
   const taxAmount = (taxableIncome * taxRate) / 100;
   
   // DiDi GST calculation: (DiDi Earnings - Total Expenses) × 10%
-  const didiGstAmount = Math.max(0, (didiIncome - totalExpenses) * 0.1);
+  const didiGstAmount = (didiIncome - totalExpenses) * 0.1;
   
   // Debug logging
   console.log('DiDi Income:', didiIncome);
@@ -122,7 +122,9 @@ export function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">DiDi GST Amount</p>
-                <p className="text-lg font-bold text-foreground">${didiGstAmount.toFixed(2)}</p>
+                <p className={`text-lg font-bold ${didiGstAmount >= 0 ? 'text-foreground' : 'text-destructive'}`}>
+                  {didiGstAmount >= 0 ? '+' : ''}${didiGstAmount.toFixed(2)}
+                </p>
               </div>
             </div>
           </CardContent>
