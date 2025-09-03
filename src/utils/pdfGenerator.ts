@@ -41,9 +41,11 @@ export const generateFinancialReport = (
   const totalIncome = incomes.reduce((sum, income) => 
     sum + income.doordash + income.ubereats + income.didi + income.coles, 0
   );
+  const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const netIncome = totalIncome - totalExpenses;
   const estimatedTax = (netIncome * taxRate) / 100;
+  const didiGstAmount = Math.max(0, (didiIncome - totalExpenses) * 0.1);
   const afterTaxIncome = netIncome - estimatedTax;
   
   // Summary section
@@ -56,9 +58,11 @@ export const generateFinancialReport = (
   doc.setTextColor(52, 73, 94);
   const summaryData = [
     ['Total Income', `$${totalIncome.toFixed(2)}`],
+    ['DiDi Income', `$${didiIncome.toFixed(2)}`],
     ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
     ['Net Income', `$${netIncome.toFixed(2)}`],
     ['Estimated Tax (' + taxRate + '%)', `$${estimatedTax.toFixed(2)}`],
+    ['DiDi GST Amount (10%)', `$${didiGstAmount.toFixed(2)}`],
     ['After-Tax Income', `$${afterTaxIncome.toFixed(2)}`]
   ];
   

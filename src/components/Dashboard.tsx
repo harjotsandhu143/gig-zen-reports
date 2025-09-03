@@ -30,10 +30,17 @@ export function Dashboard() {
   const gigIncome = incomes.reduce((sum, income) => 
     sum + income.doordash + income.ubereats + income.didi, 0
   );
+
+  // Calculate DiDi specific income for GST
+  const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const taxableIncome = Math.max(0, gigIncome - totalExpenses); // Don't tax negative income
   const taxAmount = (taxableIncome * taxRate) / 100;
+  
+  // DiDi GST calculation: (DiDi Earnings - Total Expenses) × 10%
+  const didiGstAmount = Math.max(0, (didiIncome - totalExpenses) * 0.1);
+  
   const netIncome = totalIncome - totalExpenses - taxAmount;
 
   const handleExportPDF = () => {
@@ -59,7 +66,7 @@ export function Dashboard() {
       <Navigation />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <Card className="stats-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -97,6 +104,20 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-muted-foreground">Tax ({taxRate}%)</p>
                 <p className="text-2xl font-bold text-foreground">${taxAmount.toFixed(2)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="stats-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent-light">
+                <Calculator className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">DiDi GST Amount</p>
+                <p className="text-lg font-bold text-foreground">${didiGstAmount.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
