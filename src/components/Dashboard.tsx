@@ -41,6 +41,11 @@ export function Dashboard() {
   // DiDi GST calculation: (DiDi Earnings - Total Expenses) × 10%
   const didiGstAmount = Math.max(0, (didiIncome - totalExpenses) * 0.1);
   
+  // Debug logging
+  console.log('DiDi Income:', didiIncome);
+  console.log('Total Expenses:', totalExpenses); 
+  console.log('DiDi GST Amount:', didiGstAmount);
+  
   const netIncome = totalIncome - totalExpenses - taxAmount;
 
   const handleExportPDF = () => {
@@ -112,8 +117,8 @@ export function Dashboard() {
         <Card className="stats-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent-light">
-                <Calculator className="h-5 w-5 text-accent" />
+              <div className="p-2 rounded-lg bg-secondary">
+                <Calculator className="h-5 w-5 text-secondary-foreground" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">DiDi GST Amount</p>
