@@ -12,12 +12,17 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { generateFinancialReport } from '@/utils/pdfGenerator';
 
 export default function TablePage() {
-  const { incomes, expenses, loading, deleteIncome, deleteExpense } = useData();
+  const { incomes, expenses, loading, deleteIncome, deleteExpense, taxRate } = useData();
   const { toast } = useToast();
+
+  const handleExportPDF = () => {
+    generateFinancialReport(incomes, expenses, taxRate);
+  };
 
   if (loading) {
     return (
@@ -64,8 +69,16 @@ export default function TablePage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-background p-4 pb-20">
         <header className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Data Overview</h1>
-          <p className="text-muted-foreground">Complete transaction history</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Data Overview</h1>
+              <p className="text-muted-foreground">Complete transaction history</p>
+            </div>
+            <Button onClick={handleExportPDF} variant="secondary">
+              <FileDown className="w-4 h-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
         </header>
 
         <Navigation />

@@ -1,9 +1,11 @@
-import { DollarSign, TrendingUp, Calculator, PiggyBank } from "lucide-react";
+import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useData } from "@/contexts/DataContext";
 import { Navigation } from "./Navigation";
 import { IncomeForm } from "./IncomeForm";
 import { ExpenseForm } from "./ExpenseForm";
+import { generateFinancialReport } from "@/utils/pdfGenerator";
 
 export function Dashboard() {
   const { incomes, expenses, taxRate, loading, addIncome, addExpense } = useData();
@@ -34,12 +36,24 @@ export function Dashboard() {
   const taxAmount = (taxableIncome * taxRate) / 100;
   const netIncome = totalIncome - totalExpenses - taxAmount;
 
+  const handleExportPDF = () => {
+    generateFinancialReport(incomes, expenses, taxRate);
+  };
+
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Income Tracker</h1>
-        <p className="text-muted-foreground">Track your gig income and expenses</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Income Tracker</h1>
+            <p className="text-muted-foreground">Track your gig income and expenses</p>
+          </div>
+          <Button onClick={handleExportPDF} variant="secondary">
+            <FileDown className="w-4 h-4 mr-2" />
+            Export PDF
+          </Button>
+        </div>
       </header>
 
       <Navigation />
