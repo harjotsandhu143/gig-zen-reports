@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,24 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
     coles: ''
   });
 
+  // Load form data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('incomeFormData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData);
+      } catch (error) {
+        console.error('Error loading saved form data:', error);
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('incomeFormData', JSON.stringify(formData));
+  }, [formData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -39,6 +57,8 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
     };
     
     onIncomeAdd(income);
+    // Clear localStorage after successful submission
+    localStorage.removeItem('incomeFormData');
     setFormData({
       date: new Date().toISOString().split('T')[0],
       doordash: '',

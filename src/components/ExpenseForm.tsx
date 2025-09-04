@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,24 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
     amount: ''
   });
 
+  // Load form data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('expenseFormData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData);
+      } catch (error) {
+        console.error('Error loading saved form data:', error);
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('expenseFormData', JSON.stringify(formData));
+  }, [formData]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -37,6 +55,8 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
     };
     
     onExpenseAdd(expense);
+    // Clear localStorage after successful submission
+    localStorage.removeItem('expenseFormData');
     setFormData({
       date: new Date().toISOString().split('T')[0],
       name: '',
