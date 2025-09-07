@@ -27,6 +27,7 @@ interface DataContextType {
   setTaxRate: (rate: number) => void;
   addIncome: (income: Omit<Income, 'id'>) => void;
   addExpense: (expense: Omit<Expense, 'id'>) => void;
+  updateIncome: (id: string, income: Omit<Income, 'id'>) => void;
   deleteIncome: (id: string) => void;
   deleteExpense: (id: string) => void;
   resetData: () => void;
@@ -42,6 +43,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [taxRate, setTaxRateState] = useState(20);
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
+  const [dataCache, setDataCache] = useState<{
+    incomes: Income[];
+    expenses: Expense[];
+    timestamp: number;
+  } | null>(null);
 
   // Migrate localStorage data to Supabase on first auth
   const migrateLocalStorageData = async () => {
@@ -103,36 +109,53 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Load data from Supabase
-  const loadData = async () => {
+  // Load data from Supabase with caching
+  const loadData = async (forceRefresh = false) => {
     if (!user) return;
+    
+    // Check cache first (5 minute cache)
+    const now = Date.now();
+    if (!forceRefresh && dataCache && (now - dataCache.timestamp) < 300000) {
+      setIncomes(dataCache.incomes);
+      setExpenses(dataCache.expenses);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
-      // Load incomes
-      const { data: incomesData } = await supabase
-        .from('incomes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+      // Use parallel queries for faster loading
+      const [incomesResponse, expensesResponse, settingsResponse] = await Promise.all([
+        supabase
+          .from('incomes')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('expenses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle()
+      ]);
 
-      // Load expenses
-      const { data: expensesData } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-
-      // Load user settings
-      const { data: settingsData } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      setIncomes(incomesData || []);
-      setExpenses(expensesData || []);
-      setTaxRateState(settingsData?.tax_rate || 20);
+      const sortedIncomes = incomesResponse.data || [];
+      const sortedExpenses = expensesResponse.data || [];
+      
+      setIncomes(sortedIncomes);
+      setExpenses(sortedExpenses);
+      setTaxRateState(settingsResponse.data?.tax_rate || 20);
+      
+      // Update cache
+      setDataCache({
+        incomes: sortedIncomes,
+        expenses: sortedExpenses,
+        timestamp: now
+      });
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -194,7 +217,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
         if (error) throw error;
 
-        setIncomes(prev => [data, ...prev]);
+        setIncomes(prev => [data, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       }
 
       toast({
@@ -228,7 +251,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
-      setExpenses(prev => [data, ...prev]);
+      setExpenses(prev => [data, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       toast({
         title: "Expense added",
         description: "Your expense has been saved successfully."
@@ -328,6 +351,45 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateIncome = async (id: string, income: Omit<Income, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('incomes')
+        .update({
+          date: income.date,
+          doordash: income.doordash,
+          ubereats: income.ubereats,
+          didi: income.didi,
+          coles: income.coles
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state and maintain sort order
+      setIncomes(prev => prev.map(item => 
+        item.id === id ? { ...income, id } : item
+      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+
+      // Clear cache to force refresh
+      setDataCache(null);
+
+      toast({
+        title: "Income updated",
+        description: "Your income has been updated successfully."
+      });
+    } catch (error) {
+      console.error('Error updating income:', error);
+      toast({
+        title: "Failed to update income",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const setTaxRate = async (rate: number) => {
     if (!user) return;
 
@@ -377,6 +439,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setTaxRate,
       addIncome,
       addExpense,
+      updateIncome,
       deleteIncome,
       deleteExpense,
       resetData

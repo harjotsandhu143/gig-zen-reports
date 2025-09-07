@@ -15,9 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Trash2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateFinancialReport } from '@/utils/pdfGenerator';
+import { EditIncomeDialog } from '@/components/EditIncomeDialog';
 
 export default function TablePage() {
-  const { incomes, expenses, loading, deleteIncome, deleteExpense, taxRate } = useData();
+  const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, taxRate } = useData();
   const { toast } = useToast();
 
   const handleExportPDF = () => {
@@ -106,9 +107,7 @@ export default function TablePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {incomes
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .map((income) => (
+                    {incomes.map((income) => (
                       <TableRow key={income.id}>
                         <TableCell className="font-medium">{income.date}</TableCell>
                         <TableCell>${income.doordash.toFixed(2)}</TableCell>
@@ -119,14 +118,20 @@ export default function TablePage() {
                           ${(income.doordash + income.ubereats + income.didi + income.coles).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteIncome(income.id, income.date)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1 justify-end">
+                            <EditIncomeDialog 
+                              income={income} 
+                              onUpdate={updateIncome}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteIncome(income.id, income.date)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -155,9 +160,7 @@ export default function TablePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {expenses
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .map((expense) => (
+                    {expenses.map((expense) => (
                       <TableRow key={expense.id}>
                         <TableCell className="font-medium">{expense.date}</TableCell>
                         <TableCell>{expense.name}</TableCell>
