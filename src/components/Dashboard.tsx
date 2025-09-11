@@ -1,4 +1,4 @@
-import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown } from "lucide-react";
+import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown, Undo2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/contexts/DataContext";
@@ -8,7 +8,7 @@ import { ExpenseForm } from "./ExpenseForm";
 import { generateFinancialReport } from "@/utils/pdfGenerator";
 
 export function Dashboard() {
-  const { incomes, expenses, taxRate, loading, addIncome, addExpense } = useData();
+  const { incomes, expenses, taxRate, loading, canUndo, undo, addIncome, addExpense } = useData();
 
   if (loading) {
     return (
@@ -154,6 +154,21 @@ export function Dashboard() {
       <div className="mb-8">
         <ExpenseForm onExpenseAdd={addExpense} />
       </div>
+
+      {/* Undo Button */}
+      {canUndo && (
+        <div className="mb-6 flex justify-center">
+          <Button
+            onClick={undo}
+            variant="outline"
+            size="sm"
+            className="text-primary hover:text-primary-foreground hover:bg-primary"
+          >
+            <Undo2 className="h-4 w-4 mr-2" />
+            Undo Last Action
+          </Button>
+        </div>
+      )}
 
       {/* Recent Transactions */}
       <div className="space-y-4">

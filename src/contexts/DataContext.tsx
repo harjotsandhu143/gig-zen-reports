@@ -19,11 +19,18 @@ interface Expense {
   amount: number;
 }
 
+interface UndoAction {
+  type: 'ADD_INCOME' | 'ADD_EXPENSE' | 'UPDATE_INCOME' | 'DELETE_INCOME' | 'DELETE_EXPENSE';
+  data: any;
+  timestamp: number;
+}
+
 interface DataContextType {
   incomes: Income[];
   expenses: Expense[];
   taxRate: number;
   loading: boolean;
+  canUndo: boolean;
   setTaxRate: (rate: number) => void;
   addIncome: (income: Omit<Income, 'id'>) => void;
   addExpense: (expense: Omit<Expense, 'id'>) => void;
@@ -31,6 +38,7 @@ interface DataContextType {
   deleteIncome: (id: string) => void;
   deleteExpense: (id: string) => void;
   resetData: () => void;
+  undo: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -43,6 +51,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [taxRate, setTaxRateState] = useState(20);
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
   const [dataCache, setDataCache] = useState<{
     incomes: Income[];
     expenses: Expense[];
@@ -180,7 +189,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         .eq('date', income.date)
         .maybeSingle();
 
+      let undoAction: UndoAction;
+
       if (existing) {
+        // Store previous state for undo
+        undoAction = {
+          type: 'UPDATE_INCOME',
+          data: { id: existing.id, previous: { ...existing }, updated: null },
+          timestamp: Date.now()
+        };
+
         // Update existing record with different behavior per platform
         const updated = {
           doordash: existing.doordash + income.doordash, // DoorDash: Add to previous
@@ -188,6 +206,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           didi: income.didi > 0 ? income.didi : existing.didi,
           coles: income.coles > 0 ? income.coles : existing.coles
         };
+
+        undoAction.data.updated = { ...existing, ...updated };
 
         const { error } = await supabase
           .from('incomes')
@@ -217,8 +237,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
         if (error) throw error;
 
+        // Store undo action
+        undoAction = {
+          type: 'ADD_INCOME',
+          data: { ...data },
+          timestamp: Date.now()
+        };
+
         setIncomes(prev => [data, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       }
+
+      // Add to undo stack (keep only last 10 actions)
+      setUndoStack(prev => [undoAction, ...prev.slice(0, 9)]);
 
       toast({
         title: "Income added",
@@ -251,7 +281,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
 
+      // Store undo action
+      const undoAction: UndoAction = {
+        type: 'ADD_EXPENSE',
+        data: { ...data },
+        timestamp: Date.now()
+      };
+
       setExpenses(prev => [data, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      
+      // Add to undo stack (keep only last 10 actions)
+      setUndoStack(prev => [undoAction, ...prev.slice(0, 9)]);
+
       toast({
         title: "Expense added",
         description: "Your expense has been saved successfully."
@@ -390,6 +431,58 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const undo = async () => {
+    if (!user || undoStack.length === 0) return;
+
+    const lastAction = undoStack[0];
+    
+    try {
+      switch (lastAction.type) {
+        case 'ADD_INCOME':
+          // Delete the added income
+          await supabase.from('incomes').delete().eq('id', lastAction.data.id);
+          setIncomes(prev => prev.filter(item => item.id !== lastAction.data.id));
+          break;
+          
+        case 'ADD_EXPENSE':
+          // Delete the added expense
+          await supabase.from('expenses').delete().eq('id', lastAction.data.id);
+          setExpenses(prev => prev.filter(item => item.id !== lastAction.data.id));
+          break;
+          
+        case 'UPDATE_INCOME':
+          // Restore previous income state
+          const { id, previous } = lastAction.data;
+          await supabase.from('incomes').update({
+            date: previous.date,
+            doordash: previous.doordash,
+            ubereats: previous.ubereats,
+            didi: previous.didi,
+            coles: previous.coles
+          }).eq('id', id);
+          setIncomes(prev => prev.map(item => 
+            item.id === id ? previous : item
+          ));
+          break;
+      }
+
+      // Remove the undone action from stack
+      setUndoStack(prev => prev.slice(1));
+      
+      toast({
+        title: "Action undone",
+        description: "Previous action has been reversed."
+      });
+    } catch (error) {
+      console.error('Error undoing action:', error);
+      toast({
+        title: "Failed to undo",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const setTaxRate = async (rate: number) => {
     if (!user) return;
 
@@ -436,13 +529,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       expenses,
       taxRate,
       loading,
+      canUndo: undoStack.length > 0,
       setTaxRate,
       addIncome,
       addExpense,
       updateIncome,
       deleteIncome,
       deleteExpense,
-      resetData
+      resetData,
+      undo
     }}>
       {children}
     </DataContext.Provider>
