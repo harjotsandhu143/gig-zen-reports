@@ -10,6 +10,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  tips: number;
 }
 
 interface Expense {
@@ -76,7 +77,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             doordash: income.doordash,
             ubereats: income.ubereats,
             didi: income.didi,
-            coles: income.coles
+            coles: income.coles,
+            tips: income.tips || 0
           });
         }
         localStorage.removeItem('gigzen-incomes');
@@ -204,7 +206,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           doordash: existing.doordash + income.doordash, // DoorDash: Add to previous
           ubereats: income.ubereats > 0 ? income.ubereats : existing.ubereats,
           didi: income.didi > 0 ? income.didi : existing.didi,
-          coles: income.coles > 0 ? income.coles : existing.coles
+          coles: income.coles > 0 ? income.coles : existing.coles,
+          tips: existing.tips + income.tips // Tips: Add to previous
         };
 
         undoAction.data.updated = { ...existing, ...updated };
@@ -230,7 +233,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             doordash: income.doordash,
             ubereats: income.ubereats,
             didi: income.didi,
-            coles: income.coles
+            coles: income.coles,
+            tips: income.tips
           })
           .select()
           .single();
@@ -403,7 +407,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           doordash: income.doordash,
           ubereats: income.ubereats,
           didi: income.didi,
-          coles: income.coles
+          coles: income.coles,
+          tips: income.tips
         })
         .eq('id', id);
 
@@ -458,7 +463,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             doordash: previous.doordash,
             ubereats: previous.ubereats,
             didi: previous.didi,
-            coles: previous.coles
+            coles: previous.coles,
+            tips: previous.tips
           }).eq('id', id);
           setIncomes(prev => prev.map(item => 
             item.id === id ? previous : item

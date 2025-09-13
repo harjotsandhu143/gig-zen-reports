@@ -52,6 +52,7 @@ export type Database = {
           didi: number | null
           doordash: number | null
           id: string
+          tips: number | null
           ubereats: number | null
           updated_at: string
           user_id: string
@@ -63,6 +64,7 @@ export type Database = {
           didi?: number | null
           doordash?: number | null
           id?: string
+          tips?: number | null
           ubereats?: number | null
           updated_at?: string
           user_id: string
@@ -74,6 +76,7 @@ export type Database = {
           didi?: number | null
           doordash?: number | null
           id?: string
+          tips?: number | null
           ubereats?: number | null
           updated_at?: string
           user_id?: string

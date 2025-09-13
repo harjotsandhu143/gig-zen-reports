@@ -9,6 +9,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  tips: number;
 }
 
 interface Expense {
@@ -39,7 +40,7 @@ export const generateFinancialReport = (
   
   // Calculate totals
   const totalIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi + income.coles, 0
+    sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
   );
   const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -91,11 +92,12 @@ export const generateFinancialReport = (
       `$${income.ubereats.toFixed(2)}`,
       `$${income.didi.toFixed(2)}`,
       `$${income.coles.toFixed(2)}`,
-      `$${(income.doordash + income.ubereats + income.didi + income.coles).toFixed(2)}`
+      `$${income.tips.toFixed(2)}`,
+      `$${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}`
     ]);
     
     autoTable(doc, {
-      head: [['Date', 'DoorDash', 'UberEats', 'DiDi', 'Coles', 'Total']],
+      head: [['Date', 'DoorDash', 'UberEats', 'DiDi', 'Coles', 'Tips', 'Total']],
       body: incomeData,
       startY: yPosition,
       theme: 'grid',

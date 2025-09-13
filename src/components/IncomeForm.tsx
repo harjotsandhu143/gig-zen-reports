@@ -11,6 +11,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  tips: number;
 }
 
 interface IncomeFormProps {
@@ -24,7 +25,8 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
     doordash: '',
     ubereats: '',
     didi: '',
-    coles: ''
+    coles: '',
+    tips: ''
   });
 
   // Load form data from localStorage on mount
@@ -54,6 +56,7 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
       ubereats: parseFloat(formData.ubereats) || 0,
       didi: parseFloat(formData.didi) || 0,
       coles: parseFloat(formData.coles) || 0,
+      tips: parseFloat(formData.tips) || 0,
     };
     
     onIncomeAdd(income);
@@ -64,7 +67,8 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
       doordash: '',
       ubereats: '',
       didi: '',
-      coles: ''
+      coles: '',
+      tips: ''
     });
     setIsOpen(false);
   };
@@ -169,6 +173,19 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
                 placeholder="0.00"
                 value={formData.coles}
                 onChange={(e) => handleInputChange('coles', e.target.value)}
+                className="form-input"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="tips">Tips</Label>
+              <Input
+                id="tips"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.tips}
+                onChange={(e) => handleInputChange('tips', e.target.value)}
                 className="form-input"
               />
             </div>

@@ -23,12 +23,12 @@ export function Dashboard() {
 
   // Calculate totals
   const totalIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi + income.coles, 0
+    sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
   );
   
   // Calculate gig income (excluding Coles - no tax on employment income)
   const gigIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi, 0
+    sum + income.doordash + income.ubereats + income.didi + income.tips, 0
   );
 
   // Calculate DiDi specific income for GST
@@ -195,10 +195,10 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-success">
-                        +${(income.doordash + income.ubereats + income.didi + income.coles).toFixed(2)}
+                        +${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        DD: ${income.doordash} | UE: ${income.ubereats} | DiDi: ${income.didi} | Coles: ${income.coles}
+                        DD: ${income.doordash} | UE: ${income.ubereats} | DiDi: ${income.didi} | Coles: ${income.coles} | Tips: ${income.tips}
                       </p>
                     </div>
                   </div>

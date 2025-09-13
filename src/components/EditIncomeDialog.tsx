@@ -18,6 +18,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  tips: number;
 }
 
 interface EditIncomeDialogProps {
@@ -32,7 +33,8 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
     doordash: income.doordash.toString(),
     ubereats: income.ubereats.toString(),
     didi: income.didi.toString(),
-    coles: income.coles.toString()
+    coles: income.coles.toString(),
+    tips: income.tips.toString()
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,7 +45,8 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
       doordash: parseFloat(formData.doordash) || 0,
       ubereats: parseFloat(formData.ubereats) || 0,
       didi: parseFloat(formData.didi) || 0,
-      coles: parseFloat(formData.coles) || 0
+      coles: parseFloat(formData.coles) || 0,
+      tips: parseFloat(formData.tips) || 0
     };
     
     onUpdate(income.id, updatedIncome);
@@ -136,6 +139,19 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
                 placeholder="0.00"
                 value={formData.coles}
                 onChange={(e) => handleInputChange('coles', e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="tips">Tips ($)</Label>
+              <Input
+                id="tips"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.tips}
+                onChange={(e) => handleInputChange('tips', e.target.value)}
               />
             </div>
           </div>

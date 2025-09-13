@@ -102,6 +102,7 @@ export default function TablePage() {
                       <TableHead>Uber Eats</TableHead>
                       <TableHead>DiDi</TableHead>
                       <TableHead>Coles</TableHead>
+                      <TableHead>Tips</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -114,8 +115,9 @@ export default function TablePage() {
                         <TableCell>${income.ubereats.toFixed(2)}</TableCell>
                         <TableCell>${income.didi.toFixed(2)}</TableCell>
                         <TableCell>${income.coles.toFixed(2)}</TableCell>
+                        <TableCell>${income.tips.toFixed(2)}</TableCell>
                         <TableCell className="text-right font-bold text-success">
-                          ${(income.doordash + income.ubereats + income.didi + income.coles).toFixed(2)}
+                          ${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
