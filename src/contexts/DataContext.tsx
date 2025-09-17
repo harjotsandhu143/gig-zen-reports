@@ -36,6 +36,7 @@ interface DataContextType {
   addIncome: (income: Omit<Income, 'id'>) => void;
   addExpense: (expense: Omit<Expense, 'id'>) => void;
   updateIncome: (id: string, income: Omit<Income, 'id'>) => void;
+  updateExpense: (id: string, expense: Omit<Expense, 'id'>) => void;
   deleteIncome: (id: string) => void;
   deleteExpense: (id: string) => void;
   resetData: () => void;
@@ -436,6 +437,43 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateExpense = async (id: string, expense: Omit<Expense, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .update({
+          date: expense.date,
+          name: expense.name,
+          amount: expense.amount
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state and maintain sort order
+      setExpenses(prev => prev.map(item => 
+        item.id === id ? { ...expense, id } : item
+      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+
+      // Clear cache to force refresh
+      setDataCache(null);
+
+      toast({
+        title: "Expense updated",
+        description: "Your expense has been updated successfully."
+      });
+    } catch (error) {
+      console.error('Error updating expense:', error);
+      toast({
+        title: "Failed to update expense",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const undo = async () => {
     if (!user || undoStack.length === 0) return;
 
@@ -540,6 +578,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addIncome,
       addExpense,
       updateIncome,
+      updateExpense,
       deleteIncome,
       deleteExpense,
       resetData,

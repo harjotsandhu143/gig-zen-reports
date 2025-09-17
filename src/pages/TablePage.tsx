@@ -16,9 +16,10 @@ import { Trash2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateFinancialReport } from '@/utils/pdfGenerator';
 import { EditIncomeDialog } from '@/components/EditIncomeDialog';
+import { EditExpenseDialog } from '@/components/EditExpenseDialog';
 
 export default function TablePage() {
-  const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, taxRate } = useData();
+  const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, updateExpense, taxRate } = useData();
   const { toast } = useToast();
 
   const handleExportPDF = () => {
@@ -203,6 +204,7 @@ export default function TablePage() {
                       <TableHead>Type</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -224,6 +226,35 @@ export default function TablePage() {
                           transaction.type === 'income' ? 'text-success' : 'text-warning'
                         }`}>
                           {transaction.type === 'income' ? '+' : '-'}${transaction.total.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            {transaction.type === 'income' ? (
+                              <EditIncomeDialog 
+                                income={transaction as any} 
+                                onUpdate={updateIncome}
+                              />
+                            ) : (
+                              <EditExpenseDialog 
+                                expense={transaction as any} 
+                                onUpdate={updateExpense}
+                              />
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (transaction.type === 'income') {
+                                  handleDeleteIncome(transaction.id, transaction.date);
+                                } else {
+                                  handleDeleteExpense(transaction.id, (transaction as any).name);
+                                }
+                              }}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
