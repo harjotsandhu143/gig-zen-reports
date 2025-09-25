@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getAustraliaDateString } from "@/utils/timezone";
 
 interface Income {
   date: string;
@@ -21,7 +22,7 @@ interface IncomeFormProps {
 export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getAustraliaDateString(),
     doordash: '',
     ubereats: '',
     didi: '',
@@ -63,7 +64,7 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
     // Clear localStorage after successful submission
     localStorage.removeItem('incomeFormData');
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getAustraliaDateString(),
       doordash: '',
       ubereats: '',
       didi: '',

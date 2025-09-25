@@ -6,6 +6,7 @@ import { Navigation } from "./Navigation";
 import { IncomeForm } from "./IncomeForm";
 import { ExpenseForm } from "./ExpenseForm";
 import { generateFinancialReport } from "@/utils/pdfGenerator";
+import { formatAustraliaDate, toAustraliaTime } from "@/utils/timezone";
 
 export function Dashboard() {
   const { incomes, expenses, taxRate, loading, canUndo, undo, addIncome, addExpense } = useData();
@@ -183,7 +184,7 @@ export function Dashboard() {
         ) : (
           <div className="space-y-3">
             {incomes
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime())
               .slice(0, 5)
               .map((income) => (
               <Card key={income.id} className="stats-card">
@@ -191,7 +192,7 @@ export function Dashboard() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium text-foreground">Daily Income</p>
-                      <p className="text-sm text-muted-foreground">{income.date}</p>
+                      <p className="text-sm text-muted-foreground">{formatAustraliaDate(income.date)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-success">
@@ -207,7 +208,7 @@ export function Dashboard() {
             ))}
             
             {expenses
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime())
               .slice(0, 5)
               .map((expense) => (
               <Card key={expense.id} className="stats-card">
@@ -215,7 +216,7 @@ export function Dashboard() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium text-foreground">{expense.name}</p>
-                      <p className="text-sm text-muted-foreground">{expense.date}</p>
+                      <p className="text-sm text-muted-foreground">{formatAustraliaDate(expense.date)}</p>
                     </div>
                     <p className="text-lg font-bold text-warning">-${expense.amount.toFixed(2)}</p>
                   </div>

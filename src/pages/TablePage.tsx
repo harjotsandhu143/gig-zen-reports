@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateFinancialReport } from '@/utils/pdfGenerator';
 import { EditIncomeDialog } from '@/components/EditIncomeDialog';
 import { EditExpenseDialog } from '@/components/EditExpenseDialog';
+import { formatAustraliaDate, toAustraliaTime } from '@/utils/timezone';
 
 export default function TablePage() {
   const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, updateExpense, taxRate } = useData();
@@ -65,7 +66,7 @@ export default function TablePage() {
       type: 'expense' as const,
       total: expense.amount
     }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime());
 
   return (
     <ProtectedRoute>
@@ -111,7 +112,7 @@ export default function TablePage() {
                   <TableBody>
                     {incomes.map((income) => (
                       <TableRow key={income.id}>
-                        <TableCell className="font-medium">{income.date}</TableCell>
+                        <TableCell className="font-medium">{formatAustraliaDate(income.date)}</TableCell>
                         <TableCell>${income.doordash.toFixed(2)}</TableCell>
                         <TableCell>${income.ubereats.toFixed(2)}</TableCell>
                         <TableCell>${income.didi.toFixed(2)}</TableCell>
@@ -165,7 +166,7 @@ export default function TablePage() {
                   <TableBody>
                     {expenses.map((expense) => (
                       <TableRow key={expense.id}>
-                        <TableCell className="font-medium">{expense.date}</TableCell>
+                        <TableCell className="font-medium">{formatAustraliaDate(expense.date)}</TableCell>
                         <TableCell>{expense.name}</TableCell>
                         <TableCell className="text-right font-bold text-warning">
                           ${expense.amount.toFixed(2)}
@@ -210,7 +211,7 @@ export default function TablePage() {
                   <TableBody>
                     {allTransactions.map((transaction) => (
                       <TableRow key={`${transaction.type}-${transaction.id}`}>
-                        <TableCell className="font-medium">{transaction.date}</TableCell>
+                        <TableCell className="font-medium">{formatAustraliaDate(transaction.date)}</TableCell>
                         <TableCell>
                           <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>
                             {transaction.type === 'income' ? 'Income' : 'Expense'}

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getAustraliaDateString } from "@/utils/timezone";
 
 interface Expense {
   date: string;
@@ -18,7 +19,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: getAustraliaDateString(),
     name: '',
     amount: ''
   });
@@ -58,7 +59,7 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
     // Clear localStorage after successful submission
     localStorage.removeItem('expenseFormData');
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getAustraliaDateString(),
       name: '',
       amount: ''
     });

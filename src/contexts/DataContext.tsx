@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { toAustraliaTime } from '@/utils/timezone';
 
 interface Income {
   id: string;
@@ -249,7 +250,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           timestamp: Date.now()
         };
 
-        setIncomes(prev => [data, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setIncomes(prev => [data, ...prev].sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()));
       }
 
       // Add to undo stack (keep only last 10 actions)
@@ -293,7 +294,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         timestamp: Date.now()
       };
 
-      setExpenses(prev => [data, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setExpenses(prev => [data, ...prev].sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()));
       
       // Add to undo stack (keep only last 10 actions)
       setUndoStack(prev => [undoAction, ...prev.slice(0, 9)]);
@@ -418,7 +419,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       // Update local state and maintain sort order
       setIncomes(prev => prev.map(item => 
         item.id === id ? { ...income, id } : item
-      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      ).sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()));
 
       // Clear cache to force refresh
       setDataCache(null);
@@ -455,7 +456,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       // Update local state and maintain sort order
       setExpenses(prev => prev.map(item => 
         item.id === id ? { ...expense, id } : item
-      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      ).sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()));
 
       // Clear cache to force refresh
       setDataCache(null);

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format } from 'date-fns';
+import { formatAustraliaDate } from '@/utils/timezone';
 
 interface Income {
   id: string;
@@ -34,7 +34,7 @@ export const generateFinancialReport = (
   // Add generation date
   doc.setFontSize(10);
   doc.setTextColor(127, 140, 141);
-  doc.text(`Generated on: ${format(new Date(), 'MMMM dd, yyyy')}`, 20, 35);
+  doc.text(`Generated on: ${formatAustraliaDate(new Date(), 'MMMM dd, yyyy')}`, 20, 35);
   
   let yPosition = 50;
   
@@ -87,7 +87,7 @@ export const generateFinancialReport = (
     yPosition += 10;
     
     const incomeData = incomes.map(income => [
-      format(new Date(income.date), 'MMM dd, yyyy'),
+      formatAustraliaDate(income.date, 'MMM dd, yyyy'),
       `$${income.doordash.toFixed(2)}`,
       `$${income.ubereats.toFixed(2)}`,
       `$${income.didi.toFixed(2)}`,
@@ -123,7 +123,7 @@ export const generateFinancialReport = (
     yPosition += 10;
     
     const expenseData = expenses.map(expense => [
-      format(new Date(expense.date), 'MMM dd, yyyy'),
+      formatAustraliaDate(expense.date, 'MMM dd, yyyy'),
       expense.name,
       `$${expense.amount.toFixed(2)}`
     ]);
@@ -140,6 +140,6 @@ export const generateFinancialReport = (
   }
   
   // Save the PDF
-  const fileName = `financial-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+  const fileName = `financial-report-${formatAustraliaDate(new Date(), 'yyyy-MM-dd')}.pdf`;
   doc.save(fileName);
 };
