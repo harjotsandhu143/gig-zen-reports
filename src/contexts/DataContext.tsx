@@ -185,6 +185,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     try {
+      // Apply 6% tax deduction to Coles income
+      const colesAfterTax = income.coles * 0.94;
+
       // Check if income already exists for this date
       const { data: existing } = await supabase
         .from('incomes')
@@ -208,7 +211,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           doordash: existing.doordash + income.doordash, // DoorDash: Add to previous
           ubereats: income.ubereats > 0 ? income.ubereats : existing.ubereats,
           didi: income.didi > 0 ? income.didi : existing.didi,
-          coles: income.coles > 0 ? income.coles : existing.coles,
+          coles: income.coles > 0 ? colesAfterTax : existing.coles, // Coles: Apply 6% tax deduction
           tips: existing.tips + income.tips // Tips: Add to previous
         };
 
@@ -235,7 +238,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             doordash: income.doordash,
             ubereats: income.ubereats,
             didi: income.didi,
-            coles: income.coles,
+            coles: colesAfterTax, // Apply 6% tax deduction
             tips: income.tips
           })
           .select()
