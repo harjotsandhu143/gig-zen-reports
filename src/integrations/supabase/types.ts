@@ -114,6 +114,7 @@ export type Database = {
           tax_rate: number | null
           updated_at: string
           user_id: string
+          weekly_target: number | null
         }
         Insert: {
           created_at?: string
@@ -121,6 +122,7 @@ export type Database = {
           tax_rate?: number | null
           updated_at?: string
           user_id: string
+          weekly_target?: number | null
         }
         Update: {
           created_at?: string
@@ -128,6 +130,7 @@ export type Database = {
           tax_rate?: number | null
           updated_at?: string
           user_id?: string
+          weekly_target?: number | null
         }
         Relationships: []
       }

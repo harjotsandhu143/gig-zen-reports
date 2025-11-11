@@ -31,9 +31,11 @@ interface DataContextType {
   incomes: Income[];
   expenses: Expense[];
   taxRate: number;
+  weeklyTarget: number;
   loading: boolean;
   canUndo: boolean;
   setTaxRate: (rate: number) => void;
+  setWeeklyTarget: (target: number) => void;
   addIncome: (income: Omit<Income, 'id'>) => void;
   addExpense: (expense: Omit<Expense, 'id'>) => void;
   updateIncome: (id: string, income: Omit<Income, 'id'>) => void;
@@ -52,6 +54,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [taxRate, setTaxRateState] = useState(20);
+  const [weeklyTarget, setWeeklyTargetState] = useState(0);
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
@@ -162,6 +165,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setIncomes(sortedIncomes);
       setExpenses(sortedExpenses);
       setTaxRateState(settingsResponse.data?.tax_rate || 20);
+      setWeeklyTargetState(settingsResponse.data?.weekly_target || 0);
       
       // Update cache
       setDataCache({
@@ -557,6 +561,36 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setWeeklyTarget = async (target: number) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          weekly_target: target
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      setWeeklyTargetState(target);
+      toast({
+        title: "Target updated",
+        description: `Weekly target set to $${target.toFixed(2)}`
+      });
+    } catch (error) {
+      console.error('Error updating weekly target:', error);
+      toast({
+        title: "Failed to update target",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Load data when user logs in
   useEffect(() => {
     if (user) {
@@ -576,9 +610,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       incomes,
       expenses,
       taxRate,
+      weeklyTarget,
       loading,
       canUndo: undoStack.length > 0,
       setTaxRate,
+      setWeeklyTarget,
       addIncome,
       addExpense,
       updateIncome,

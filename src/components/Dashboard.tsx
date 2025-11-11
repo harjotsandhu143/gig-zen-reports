@@ -1,15 +1,28 @@
-import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown, Undo2 } from "lucide-react";
+import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown, Undo2, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useData } from "@/contexts/DataContext";
 import { Navigation } from "./Navigation";
 import { IncomeForm } from "./IncomeForm";
 import { ExpenseForm } from "./ExpenseForm";
 import { generateFinancialReport } from "@/utils/pdfGenerator";
 import { formatAustraliaDate, toAustraliaTime } from "@/utils/timezone";
+import { useState, useEffect } from "react";
 
 export function Dashboard() {
-  const { incomes, expenses, taxRate, loading, canUndo, undo, addIncome, addExpense } = useData();
+  const { incomes, expenses, taxRate, weeklyTarget, setWeeklyTarget, loading, canUndo, undo, addIncome, addExpense } = useData();
+  const [targetInput, setTargetInput] = useState(weeklyTarget.toString());
+
+  useEffect(() => {
+    setTargetInput(weeklyTarget.toString());
+  }, [weeklyTarget]);
+
+  const handleTargetUpdate = () => {
+    const target = parseFloat(targetInput) || 0;
+    setWeeklyTarget(target);
+  };
 
   if (loading) {
     return (
@@ -26,6 +39,9 @@ export function Dashboard() {
   const totalIncome = incomes.reduce((sum, income) => 
     sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
   );
+  
+  // Calculate remaining to meet target
+  const remaining = weeklyTarget - totalIncome;
   
   // Calculate gig income (excluding Coles - no tax on employment income)
   const gigIncome = incomes.reduce((sum, income) => 
@@ -73,6 +89,52 @@ export function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {/* Weekly Target Input Card */}
+        <Card className="stats-card col-span-2 lg:col-span-1">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary-light">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="weekly-target" className="text-sm text-muted-foreground">Weekly Target</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="weekly-target"
+                    type="number"
+                    value={targetInput}
+                    onChange={(e) => setTargetInput(e.target.value)}
+                    onBlur={handleTargetUpdate}
+                    onKeyDown={(e) => e.key === 'Enter' && handleTargetUpdate()}
+                    className="h-8 text-lg font-bold"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Remaining Amount Card */}
+        <Card className="stats-card col-span-2 lg:col-span-1">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${remaining > 0 ? 'bg-warning-light' : 'bg-success-light'}`}>
+                <Calculator className={`h-5 w-5 ${remaining > 0 ? 'text-warning' : 'text-success'}`} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Remaining</p>
+                <p className={`text-2xl font-bold ${remaining > 0 ? 'text-warning' : 'text-success'}`}>
+                  ${Math.abs(remaining).toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {remaining > 0 ? 'To reach target' : 'Target exceeded!'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="stats-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
