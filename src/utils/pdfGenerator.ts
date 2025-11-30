@@ -28,9 +28,9 @@ export const generateFinancialReport = (
   const doc = new jsPDF();
   
   // Add title
-  doc.setFontSize(20);
+  doc.setFontSize(24);
   doc.setTextColor(44, 62, 80);
-  doc.text('Financial Report', 20, 25);
+  doc.text('Income Tracker Report', 20, 25);
   
   // Add generation date
   doc.setFontSize(10);
@@ -44,12 +44,17 @@ export const generateFinancialReport = (
     sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
   );
   const colesIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
+  const gigIncome = incomes.reduce((sum, income) => 
+    sum + income.doordash + income.ubereats + income.didi + income.tips, 0
+  );
   const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const netIncome = totalIncome - totalExpenses;
-  const estimatedTax = (netIncome * taxRate) / 100;
+  
+  // Calculate tax on gig income only (excluding Coles employment income)
+  const taxableIncome = Math.max(0, gigIncome - totalExpenses);
+  const taxAmount = (taxableIncome * taxRate) / 100;
   const didiGstAmount = (didiIncome - totalExpenses) * 0.1;
-  const afterTaxIncome = netIncome - estimatedTax;
+  const netIncome = totalIncome - totalExpenses - taxAmount;
   
   // Calculate weekly Coles tax for current week
   const currentWeekBounds = getAustraliaWeekBounds(new Date());
@@ -61,66 +66,71 @@ export const generateFinancialReport = (
     .reduce((sum, income) => sum + income.coles, 0);
   
   const { tax: weeklyTax, netPay: weeklyNetPay } = calculateWeeklyTax(weeklyColesIncome);
+  const hasAnyColes = incomes.some(income => income.coles > 0);
   
-  // Summary section
-  doc.setFontSize(14);
-  doc.setTextColor(44, 62, 80);
-  doc.text('Summary', 20, yPosition);
-  yPosition += 10;
-  
-  doc.setFontSize(10);
-  doc.setTextColor(52, 73, 94);
-  const summaryData = [
-    ['Total Income', `$${totalIncome.toFixed(2)}`],
-    ['Coles Income', `$${colesIncome.toFixed(2)}`],
-    ['DiDi Income', `$${didiIncome.toFixed(2)}`],
-    ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
-    ['Net Income', `$${netIncome.toFixed(2)}`],
-    ['Estimated Tax (' + taxRate + '%)', `$${estimatedTax.toFixed(2)}`],
-    ['DiDi GST Amount (10%)', `$${didiGstAmount.toFixed(2)}`],
-    ['After-Tax Income', `$${afterTaxIncome.toFixed(2)}`]
-  ];
-  
-  autoTable(doc, {
-    head: [['Category', 'Amount']],
-    body: summaryData,
-    startY: yPosition,
-    theme: 'grid',
-    headStyles: { fillColor: [52, 152, 219], textColor: 255 },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-    margin: { left: 20, right: 20 }
-  });
-  
-  yPosition = (doc as any).lastAutoTable.finalY + 20;
-  
-  // Coles Weekly Tax Summary section
-  if (weeklyColesIncome > 0) {
-    doc.setFontSize(14);
+  // Coles Weekly Tax Summary section (if applicable)
+  if (hasAnyColes && weeklyColesIncome > 0) {
+    doc.setFontSize(16);
     doc.setTextColor(44, 62, 80);
-    doc.text('Coles Weekly Tax Summary (Current Week)', 20, yPosition);
-    yPosition += 10;
+    doc.text('Coles Weekly Tax Summary (ATO Scale 2)', 20, yPosition);
+    yPosition += 5;
     
+    doc.setFontSize(9);
+    doc.setTextColor(127, 140, 141);
     const weekRange = `${formatAustraliaDate(currentWeekBounds.start, 'MMM dd')} - ${formatAustraliaDate(currentWeekBounds.end, 'MMM dd, yyyy')}`;
+    doc.text(`Week: ${weekRange}`, 20, yPosition);
+    yPosition += 8;
     
     const colesTaxData = [
-      ['Week Period', weekRange],
-      ['Weekly Gross', `$${weeklyColesIncome.toFixed(2)}`],
-      ['Weekly Tax (ATO Scale)', `$${weeklyTax.toFixed(2)}`],
-      ['Weekly Net Pay', `$${weeklyNetPay.toFixed(2)}`]
+      ['Gross Amount', `$${weeklyColesIncome.toFixed(2)}`],
+      ['Tax Deducted', `$${weeklyTax.toFixed(2)}`],
+      ['Net Pay', `$${weeklyNetPay.toFixed(2)}`]
     ];
     
     autoTable(doc, {
       head: [['Category', 'Amount']],
       body: colesTaxData,
       startY: yPosition,
-      theme: 'grid',
+      theme: 'striped',
       headStyles: { fillColor: [155, 89, 182], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
-      margin: { left: 20, right: 20 }
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: 20, right: 20 },
+      styles: { fontSize: 11 }
     });
     
-    yPosition = (doc as any).lastAutoTable.finalY + 20;
+    yPosition = (doc as any).lastAutoTable.finalY + 5;
+    doc.setFontSize(8);
+    doc.setTextColor(127, 140, 141);
+    doc.text('Tax calculated using ATO Weekly Tax Table (Resident with Tax-Free Threshold)', 20, yPosition);
+    yPosition += 15;
   }
+  
+  // Key Statistics section
+  doc.setFontSize(16);
+  doc.setTextColor(44, 62, 80);
+  doc.text('Key Statistics', 20, yPosition);
+  yPosition += 10;
+  
+  const statsData = [
+    ['Total Income', `$${totalIncome.toFixed(2)}`],
+    ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
+    ['Tax (' + taxRate + '%)', `$${taxAmount.toFixed(2)}`],
+    ['DiDi GST Amount (10%)', `$${didiGstAmount.toFixed(2)}`],
+    ['Net Income', `$${netIncome.toFixed(2)}`]
+  ];
+  
+  autoTable(doc, {
+    head: [['Category', 'Amount']],
+    body: statsData,
+    startY: yPosition,
+    theme: 'striped',
+    headStyles: { fillColor: [52, 152, 219], textColor: 255 },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: 20, right: 20 },
+    styles: { fontSize: 11 }
+  });
+  
+  yPosition = (doc as any).lastAutoTable.finalY + 20;
   
   // Income section
   if (incomes.length > 0) {
