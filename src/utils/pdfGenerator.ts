@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatAustraliaDate } from '@/utils/timezone';
+import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from '@/utils/timezone';
+import { calculateWeeklyTax } from '@/utils/taxCalculator';
 
 interface Income {
   id: string;
@@ -42,12 +43,24 @@ export const generateFinancialReport = (
   const totalIncome = incomes.reduce((sum, income) => 
     sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
   );
+  const colesIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
   const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const netIncome = totalIncome - totalExpenses;
   const estimatedTax = (netIncome * taxRate) / 100;
   const didiGstAmount = (didiIncome - totalExpenses) * 0.1;
   const afterTaxIncome = netIncome - estimatedTax;
+  
+  // Calculate weekly Coles tax for current week
+  const currentWeekBounds = getAustraliaWeekBounds(new Date());
+  const weeklyColesIncome = incomes
+    .filter(income => {
+      const incomeDate = toAustraliaTime(income.date);
+      return incomeDate >= currentWeekBounds.start && incomeDate <= currentWeekBounds.end;
+    })
+    .reduce((sum, income) => sum + income.coles, 0);
+  
+  const { tax: weeklyTax, netPay: weeklyNetPay } = calculateWeeklyTax(weeklyColesIncome);
   
   // Summary section
   doc.setFontSize(14);
@@ -59,6 +72,7 @@ export const generateFinancialReport = (
   doc.setTextColor(52, 73, 94);
   const summaryData = [
     ['Total Income', `$${totalIncome.toFixed(2)}`],
+    ['Coles Income', `$${colesIncome.toFixed(2)}`],
     ['DiDi Income', `$${didiIncome.toFixed(2)}`],
     ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
     ['Net Income', `$${netIncome.toFixed(2)}`],
@@ -78,6 +92,35 @@ export const generateFinancialReport = (
   });
   
   yPosition = (doc as any).lastAutoTable.finalY + 20;
+  
+  // Coles Weekly Tax Summary section
+  if (weeklyColesIncome > 0) {
+    doc.setFontSize(14);
+    doc.setTextColor(44, 62, 80);
+    doc.text('Coles Weekly Tax Summary (Current Week)', 20, yPosition);
+    yPosition += 10;
+    
+    const weekRange = `${formatAustraliaDate(currentWeekBounds.start, 'MMM dd')} - ${formatAustraliaDate(currentWeekBounds.end, 'MMM dd, yyyy')}`;
+    
+    const colesTaxData = [
+      ['Week Period', weekRange],
+      ['Weekly Gross', `$${weeklyColesIncome.toFixed(2)}`],
+      ['Weekly Tax (ATO Scale)', `$${weeklyTax.toFixed(2)}`],
+      ['Weekly Net Pay', `$${weeklyNetPay.toFixed(2)}`]
+    ];
+    
+    autoTable(doc, {
+      head: [['Category', 'Amount']],
+      body: colesTaxData,
+      startY: yPosition,
+      theme: 'grid',
+      headStyles: { fillColor: [155, 89, 182], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      margin: { left: 20, right: 20 }
+    });
+    
+    yPosition = (doc as any).lastAutoTable.finalY + 20;
+  }
   
   // Income section
   if (incomes.length > 0) {
