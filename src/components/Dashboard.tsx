@@ -1,4 +1,4 @@
-import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown, Undo2, Target, Wallet } from "lucide-react";
+import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,12 @@ import { generateFinancialReport } from "@/utils/pdfGenerator";
 import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from "@/utils/timezone";
 import { calculateWeeklyTax } from "@/utils/taxCalculator";
 import { useState, useEffect } from "react";
+import { addWeeks, format } from "date-fns";
 
 export function Dashboard() {
   const { incomes, expenses, taxRate, weeklyTarget, setWeeklyTarget, loading, canUndo, undo, addIncome, addExpense } = useData();
   const [targetInput, setTargetInput] = useState(weeklyTarget.toString());
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
 
   useEffect(() => {
     setTargetInput(weeklyTarget.toString());
@@ -44,16 +46,20 @@ export function Dashboard() {
   // Calculate remaining to meet target
   const remaining = weeklyTarget - totalIncome;
   
-  // Calculate weekly Coles income with tax
-  const currentWeekBounds = getAustraliaWeekBounds();
+  // Calculate weekly Coles income with tax for selected week
+  const selectedWeekDate = addWeeks(new Date(), selectedWeekOffset);
+  const selectedWeekBounds = getAustraliaWeekBounds(selectedWeekDate);
   const weeklyColesIncome = incomes
     .filter(income => {
       const incomeDate = toAustraliaTime(income.date);
-      return incomeDate >= currentWeekBounds.start && incomeDate <= currentWeekBounds.end;
+      return incomeDate >= selectedWeekBounds.start && incomeDate <= selectedWeekBounds.end;
     })
     .reduce((sum, income) => sum + income.coles, 0);
   
   const { tax: weeklyTax, netPay: weeklyNetPay } = calculateWeeklyTax(weeklyColesIncome);
+  
+  // Check if there's any Coles income in any week
+  const hasAnyColes = incomes.some(income => income.coles > 0);
   
   // Calculate gig income (excluding Coles - no tax on employment income)
   const gigIncome = incomes.reduce((sum, income) => 
@@ -100,32 +106,67 @@ export function Dashboard() {
       <Navigation />
 
       {/* Weekly Coles Tax Summary */}
-      {weeklyColesIncome > 0 && (
+      {hasAnyColes && (
         <Card className="mb-6 border-2 border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Wallet className="h-5 w-5 text-primary" />
-              Coles Weekly Tax Summary (ATO Scale 2)
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-lg">
+                <Wallet className="h-5 w-5 text-primary" />
+                Coles Weekly Tax Summary (ATO Scale 2)
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedWeekOffset(selectedWeekOffset - 1)}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-normal text-muted-foreground min-w-[140px] text-center">
+                  {selectedWeekOffset === 0 
+                    ? "This Week" 
+                    : `Week of ${format(selectedWeekBounds.start, 'MMM d')}`
+                  }
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedWeekOffset(selectedWeekOffset + 1)}
+                  disabled={selectedWeekOffset >= 0}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Gross Amount</p>
-                <p className="text-xl font-bold text-foreground">${weeklyColesIncome.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Tax Deducted</p>
-                <p className="text-xl font-bold text-warning">${weeklyTax.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Net Pay</p>
-                <p className="text-xl font-bold text-success">${weeklyNetPay.toFixed(2)}</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              Tax calculated using ATO Weekly Tax Table (Resident with Tax-Free Threshold)
-            </p>
+            {weeklyColesIncome > 0 ? (
+              <>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Gross Amount</p>
+                    <p className="text-xl font-bold text-foreground">${weeklyColesIncome.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Tax Deducted</p>
+                    <p className="text-xl font-bold text-warning">${weeklyTax.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Net Pay</p>
+                    <p className="text-xl font-bold text-success">${weeklyNetPay.toFixed(2)}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Tax calculated using ATO Weekly Tax Table (Resident with Tax-Free Threshold)
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No Coles income for this week
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
