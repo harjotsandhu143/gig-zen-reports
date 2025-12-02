@@ -348,7 +348,12 @@ export function Dashboard() {
             {incomes
               .sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime())
               .slice(0, 5)
-              .map((income) => (
+              .map((income) => {
+                // Calculate net Coles for this entry
+                const colesNet = income.coles > 0 ? income.coles - calculateWeeklyTax(income.coles).tax : 0;
+                const dailyTotal = income.doordash + income.ubereats + income.didi + colesNet + income.tips;
+                
+                return (
               <Card key={income.id} className="stats-card">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
@@ -358,16 +363,17 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-success">
-                        +${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}
+                        +${dailyTotal.toFixed(2)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        DD: ${income.doordash} | UE: ${income.ubereats} | DiDi: ${income.didi} | Coles: ${income.coles} | Tips: ${income.tips}
+                        DD: ${income.doordash} | UE: ${income.ubereats} | DiDi: ${income.didi} | Coles: ${colesNet.toFixed(2)} | Tips: ${income.tips}
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+                );
+              })}
             
             {expenses
               .sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime())
