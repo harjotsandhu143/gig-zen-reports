@@ -60,6 +60,13 @@ export function Dashboard() {
   // Total income = Coles (Net after tax) + Gig income (Gross)
   const totalIncome = colesNetIncome + gigIncome;
   
+  // Debug logging
+  console.log('Coles Gross:', colesGrossIncome);
+  console.log('Coles Tax:', totalColesTax);
+  console.log('Coles Net:', colesNetIncome);
+  console.log('Gig Income:', gigIncome);
+  console.log('Total Income:', totalIncome);
+  
   // Calculate remaining to meet target
   const remaining = weeklyTarget - totalIncome;
   
