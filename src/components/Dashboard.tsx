@@ -38,10 +38,27 @@ export function Dashboard() {
     );
   }
 
-  // Calculate totals
-  const totalIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
-  );
+  // Calculate totals by income source
+  const doordashIncome = incomes.reduce((sum, income) => sum + income.doordash, 0);
+  const ubereatsIncome = incomes.reduce((sum, income) => sum + income.ubereats, 0);
+  const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
+  const tipsIncome = incomes.reduce((sum, income) => sum + income.tips, 0);
+  const colesGrossIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
+  
+  // Calculate total Coles tax across all entries
+  let totalColesTax = 0;
+  incomes.forEach(income => {
+    if (income.coles > 0) {
+      const { tax } = calculateWeeklyTax(income.coles);
+      totalColesTax += tax;
+    }
+  });
+  
+  const colesNetIncome = colesGrossIncome - totalColesTax;
+  const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
+  
+  // Total income = Coles (Net after tax) + Gig income (Gross)
+  const totalIncome = colesNetIncome + gigIncome;
   
   // Calculate remaining to meet target
   const remaining = weeklyTarget - totalIncome;
@@ -60,14 +77,6 @@ export function Dashboard() {
   
   // Check if there's any Coles income in any week
   const hasAnyColes = incomes.some(income => income.coles > 0);
-  
-  // Calculate gig income (excluding Coles - no tax on employment income)
-  const gigIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi + income.tips, 0
-  );
-
-  // Calculate DiDi specific income for GST
-  const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const taxableIncome = Math.max(0, gigIncome - totalExpenses); // Don't tax negative income
