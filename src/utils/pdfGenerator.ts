@@ -39,16 +39,26 @@ export const generateFinancialReport = (
   
   let yPosition = 50;
   
-  // Calculate totals
-  const totalIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi + income.coles + income.tips, 0
-  );
-  const colesIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
-  const gigIncome = incomes.reduce((sum, income) => 
-    sum + income.doordash + income.ubereats + income.didi + income.tips, 0
-  );
+  // Calculate totals by income source
+  const doordashIncome = incomes.reduce((sum, income) => sum + income.doordash, 0);
+  const ubereatsIncome = incomes.reduce((sum, income) => sum + income.ubereats, 0);
   const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
+  const tipsIncome = incomes.reduce((sum, income) => sum + income.tips, 0);
+  const colesGrossIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  
+  // Calculate total Coles tax across all entries
+  let totalColesTax = 0;
+  incomes.forEach(income => {
+    if (income.coles > 0) {
+      const { tax } = calculateWeeklyTax(income.coles);
+      totalColesTax += tax;
+    }
+  });
+  
+  const colesNetIncome = colesGrossIncome - totalColesTax;
+  const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
+  const totalIncome = colesNetIncome + gigIncome;
   
   // Calculate tax on gig income only (excluding Coles employment income)
   const taxableIncome = Math.max(0, gigIncome - totalExpenses);
@@ -105,6 +115,36 @@ export const generateFinancialReport = (
     yPosition += 15;
   }
   
+  // Income Breakdown section
+  doc.setFontSize(16);
+  doc.setTextColor(44, 62, 80);
+  doc.text('Income Breakdown', 20, yPosition);
+  yPosition += 10;
+  
+  const incomeBreakdownData = [
+    ['DoorDash', `$${doordashIncome.toFixed(2)}`],
+    ['UberEats', `$${ubereatsIncome.toFixed(2)}`],
+    ['DiDi', `$${didiIncome.toFixed(2)}`],
+    ['Tips', `$${tipsIncome.toFixed(2)}`],
+    ['Coles (Gross)', `$${colesGrossIncome.toFixed(2)}`],
+    ['Coles Tax Withheld', `-$${totalColesTax.toFixed(2)}`],
+    ['Coles (Net)', `$${colesNetIncome.toFixed(2)}`],
+    ['Total Income (After Tax)', `$${totalIncome.toFixed(2)}`]
+  ];
+  
+  autoTable(doc, {
+    head: [['Source', 'Amount']],
+    body: incomeBreakdownData,
+    startY: yPosition,
+    theme: 'striped',
+    headStyles: { fillColor: [46, 204, 113], textColor: 255 },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: 20, right: 20 },
+    styles: { fontSize: 11 }
+  });
+  
+  yPosition = (doc as any).lastAutoTable.finalY + 20;
+  
   // Key Statistics section
   doc.setFontSize(16);
   doc.setTextColor(44, 62, 80);
@@ -112,9 +152,9 @@ export const generateFinancialReport = (
   yPosition += 10;
   
   const statsData = [
-    ['Total Income', `$${totalIncome.toFixed(2)}`],
+    ['Total Income (After Coles Tax)', `$${totalIncome.toFixed(2)}`],
     ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
-    ['Tax (' + taxRate + '%)', `$${taxAmount.toFixed(2)}`],
+    ['Gig Income Tax (' + taxRate + '%)', `$${taxAmount.toFixed(2)}`],
     ['DiDi GST Amount (10%)', `$${didiGstAmount.toFixed(2)}`],
     ['Net Income', `$${netIncome.toFixed(2)}`]
   ];
