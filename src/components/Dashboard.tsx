@@ -1,4 +1,5 @@
-import { DollarSign, TrendingUp, Calculator, PiggyBank, FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,19 +86,6 @@ export function Dashboard() {
   // Check if there's any Coles income in any week
   const hasAnyColes = incomes.some(income => income.coles > 0);
   
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const taxableIncome = Math.max(0, gigIncome - totalExpenses); // Don't tax negative income
-  const taxAmount = (taxableIncome * taxRate) / 100;
-  
-  // DiDi GST calculation: (DiDi Earnings - Total Expenses) × 10%
-  const didiGstAmount = (didiIncome - totalExpenses) * 0.1;
-  
-  // Debug logging
-  console.log('DiDi Income:', didiIncome);
-  console.log('Total Expenses:', totalExpenses); 
-  console.log('DiDi GST Amount:', didiGstAmount);
-  
-  const netIncome = totalIncome - totalExpenses - taxAmount;
 
   const handleExportPDF = () => {
     generateFinancialReport(incomes, expenses, taxRate);
@@ -220,7 +208,7 @@ export function Dashboard() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${remaining > 0 ? 'bg-warning-light' : 'bg-success-light'}`}>
-                <Calculator className={`h-5 w-5 ${remaining > 0 ? 'text-warning' : 'text-success'}`} />
+                <Target className={`h-5 w-5 ${remaining > 0 ? 'text-warning' : 'text-success'}`} />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Remaining</p>
@@ -235,73 +223,45 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="stats-card">
+        {/* Weekly Target Progress Pie Chart */}
+        <Card className="stats-card col-span-2 lg:col-span-1">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success-light">
-                <TrendingUp className="h-5 w-5 text-success" />
+            <div className="flex items-center gap-4">
+              <div className="relative w-24 h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Earned', value: Math.min(totalIncome, weeklyTarget || 1) },
+                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalIncome) }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={25}
+                      outerRadius={40}
+                      startAngle={90}
+                      endAngle={-270}
+                      dataKey="value"
+                    >
+                      <Cell fill="hsl(var(--success))" />
+                      <Cell fill="hsl(var(--muted))" />
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold">
+                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalIncome / weeklyTarget) * 100))}%` : '0%'}
+                  </span>
+                </div>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Total Income</p>
-                <p className="text-2xl font-bold text-foreground">${totalIncome.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-warning-light">
-                <DollarSign className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Expenses</p>
-                <p className="text-2xl font-bold text-foreground">${totalExpenses.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary-light">
-                <Calculator className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tax ({taxRate}%)</p>
-                <p className="text-2xl font-bold text-foreground">${taxAmount.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-secondary">
-                <Calculator className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">DiDi GST Amount</p>
-                <p className={`text-lg font-bold ${didiGstAmount >= 0 ? 'text-foreground' : 'text-destructive'}`}>
-                  {didiGstAmount >= 0 ? '+' : ''}${didiGstAmount.toFixed(2)}
+                <p className="text-xl font-bold text-success">${totalIncome.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {remaining > 0 
+                    ? `$${remaining.toFixed(2)} left to target` 
+                    : `Target exceeded by $${Math.abs(remaining).toFixed(2)}!`}
                 </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success-light">
-                <PiggyBank className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Net Income</p>
-                <p className="text-2xl font-bold text-foreground">${netIncome.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
