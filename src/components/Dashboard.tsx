@@ -47,14 +47,8 @@ export function Dashboard() {
   const tipsIncome = incomes.reduce((sum, income) => sum + income.tips, 0);
   const colesGrossIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
   
-  // Calculate total Coles tax across all entries
-  let totalColesTax = 0;
-  incomes.forEach(income => {
-    if (income.coles > 0) {
-      const { tax } = calculateWeeklyTax(income.coles);
-      totalColesTax += tax;
-    }
-  });
+  // Calculate Coles tax on weekly total (ATO tax table is designed for weekly totals)
+  const { tax: totalColesTax } = calculateWeeklyTax(colesGrossIncome);
   
   const colesNetIncome = colesGrossIncome - totalColesTax;
   const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
