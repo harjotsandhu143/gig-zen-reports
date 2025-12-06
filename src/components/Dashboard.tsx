@@ -1,5 +1,5 @@
 import { FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useData } from "@/contexts/DataContext";
 import { Navigation } from "./Navigation";
 import { IncomeForm } from "./IncomeForm";
-import { ExpenseForm } from "./ExpenseForm";
+
 import { generateFinancialReport } from "@/utils/pdfGenerator";
 import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from "@/utils/timezone";
 import { calculateWeeklyTax } from "@/utils/taxCalculator";
@@ -16,7 +16,7 @@ import { useState, useEffect } from "react";
 import { addWeeks, format } from "date-fns";
 
 export function Dashboard() {
-  const { incomes, expenses, taxRate, weeklyTarget, setWeeklyTarget, loading, canUndo, undo, addIncome, addExpense } = useData();
+  const { incomes, expenses, taxRate, weeklyTarget, setWeeklyTarget, loading, canUndo, undo, addIncome } = useData();
   const [targetInput, setTargetInput] = useState(weeklyTarget.toString());
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
 
@@ -274,10 +274,47 @@ export function Dashboard() {
         <IncomeForm onIncomeAdd={addIncome} />
       </div>
 
-      {/* Expense Form */}
-      <div className="mb-8">
-        <ExpenseForm onExpenseAdd={addExpense} />
-      </div>
+      {/* Gig Income Breakdown Bar Chart */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-lg">Gig Income Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: 'DoorDash', amount: doordashIncome, fill: 'hsl(var(--chart-1))' },
+                  { name: 'Uber Eats', amount: ubereatsIncome, fill: 'hsl(var(--chart-2))' },
+                  { name: 'DiDi', amount: didiIncome, fill: 'hsl(var(--chart-3))' }
+                ]}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+              >
+                <XAxis type="number" tickFormatter={(value) => `$${value}`} />
+                <YAxis type="category" dataKey="name" />
+                <Tooltip 
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Earned']}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
+                  {[
+                    { name: 'DoorDash', amount: doordashIncome, fill: 'hsl(var(--chart-1))' },
+                    { name: 'Uber Eats', amount: ubereatsIncome, fill: 'hsl(var(--chart-2))' },
+                    { name: 'DiDi', amount: didiIncome, fill: 'hsl(var(--chart-3))' }
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Undo Button */}
       {canUndo && (
