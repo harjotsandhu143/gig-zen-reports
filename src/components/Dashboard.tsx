@@ -272,25 +272,26 @@ export function Dashboard() {
         <IncomeForm onIncomeAdd={addIncome} />
       </div>
 
-      {/* Gig Income Breakdown Bar Chart */}
+      {/* Income Breakdown Bar Chart */}
       <Card className="mb-8 border-0 shadow-lg bg-gradient-to-br from-card to-primary/5 animate-fade-in" style={{ animationDelay: '0.4s' }}>
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <div className="w-1 h-5 rounded-full bg-primary"></div>
-            Gig Income Breakdown
+            Income Breakdown
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-52">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
                   { name: 'DoorDash', amount: doordashIncome },
                   { name: 'Uber Eats', amount: ubereatsIncome },
-                  { name: 'DiDi', amount: didiIncome }
+                  { name: 'DiDi', amount: didiIncome },
+                  { name: 'Coles (Net)', amount: colesNetIncome }
                 ]}
                 layout="vertical"
-                margin={{ top: 10, right: 30, left: 70, bottom: 10 }}
+                margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
               >
                 <XAxis 
                   type="number" 
@@ -316,10 +317,11 @@ export function Dashboard() {
                   }}
                   cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                 />
-                <Bar dataKey="amount" radius={[0, 8, 8, 0]} barSize={28}>
+                <Bar dataKey="amount" radius={[0, 8, 8, 0]} barSize={24}>
                   <Cell fill="hsl(var(--destructive))" />
                   <Cell fill="hsl(var(--success))" />
                   <Cell fill="hsl(var(--warning))" />
+                  <Cell fill="hsl(var(--primary))" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
