@@ -1,15 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Home, Settings, RotateCcw } from 'lucide-react';
+import { BarChart3, Home, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Navigation() {
   const location = useLocation();
-  const { taxRate, setTaxRate, resetData } = useData();
+  const { taxRate, setTaxRate } = useData();
+  const { signOut } = useAuth();
 
   return (
     <div className="flex flex-col gap-4 mb-6">
-      <nav className="flex gap-2">
+      <nav className="flex gap-2 flex-wrap">
         <Button
           variant={location.pathname === '/' ? 'default' : 'outline'}
           asChild
@@ -39,12 +41,12 @@ export function Navigation() {
           Tax: {taxRate}%
         </Button>
         <Button
-          variant="destructive"
+          variant="outline"
           size="sm"
-          onClick={resetData}
+          onClick={signOut}
         >
-          <RotateCcw className="h-4 w-4 mr-1" />
-          Reset
+          <LogOut className="h-4 w-4 mr-1" />
+          Logout
         </Button>
       </nav>
     </div>
