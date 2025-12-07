@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { toAustraliaTime } from '@/utils/timezone';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
 
 interface Income {
   id: string;
@@ -46,10 +48,9 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-const generateId = () => crypto.randomUUID();
-
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [taxRate, setTaxRateState] = useState(20);
@@ -57,97 +58,133 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
 
-  // Load data from localStorage on mount
+  // Load data from Supabase when user is authenticated
   useEffect(() => {
-    try {
-      const savedIncomes = localStorage.getItem('gigzen-incomes');
-      const savedExpenses = localStorage.getItem('gigzen-expenses');
-      const savedTaxRate = localStorage.getItem('gigzen-taxrate');
-      const savedWeeklyTarget = localStorage.getItem('gigzen-weeklytarget');
-
-      if (savedIncomes) {
-        const parsed = JSON.parse(savedIncomes);
-        setIncomes(parsed.sort((a: Income, b: Income) => 
-          toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()
-        ));
-      }
-      if (savedExpenses) {
-        const parsed = JSON.parse(savedExpenses);
-        setExpenses(parsed.sort((a: Expense, b: Expense) => 
-          toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()
-        ));
-      }
-      if (savedTaxRate) setTaxRateState(parseFloat(savedTaxRate));
-      if (savedWeeklyTarget) setWeeklyTargetState(parseFloat(savedWeeklyTarget));
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
+    if (!user) {
+      setIncomes([]);
+      setExpenses([]);
       setLoading(false);
+      return;
     }
-  }, []);
 
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('gigzen-incomes', JSON.stringify(incomes));
-    }
-  }, [incomes, loading]);
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        // Load incomes
+        const { data: incomesData, error: incomesError } = await supabase
+          .from('incomes')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('gigzen-expenses', JSON.stringify(expenses));
-    }
-  }, [expenses, loading]);
+        if (incomesError) throw incomesError;
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('gigzen-taxrate', taxRate.toString());
-    }
-  }, [taxRate, loading]);
+        const mappedIncomes: Income[] = (incomesData || []).map(inc => ({
+          id: inc.id,
+          date: inc.date,
+          doordash: inc.doordash || 0,
+          ubereats: inc.ubereats || 0,
+          didi: inc.didi || 0,
+          coles: inc.coles || 0,
+          tips: inc.tips || 0
+        }));
+        setIncomes(mappedIncomes);
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('gigzen-weeklytarget', weeklyTarget.toString());
-    }
-  }, [weeklyTarget, loading]);
+        // Load expenses
+        const { data: expensesData, error: expensesError } = await supabase
+          .from('expenses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
 
-  const addIncome = (income: Omit<Income, 'id'>) => {
+        if (expensesError) throw expensesError;
+
+        const mappedExpenses: Expense[] = (expensesData || []).map(exp => ({
+          id: exp.id,
+          date: exp.date,
+          name: exp.name,
+          amount: exp.amount
+        }));
+        setExpenses(mappedExpenses);
+
+        // Load user settings
+        const { data: settingsData } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (settingsData) {
+          setTaxRateState(settingsData.tax_rate || 20);
+          setWeeklyTargetState(settingsData.weekly_target || 0);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  const addIncome = async (income: Omit<Income, 'id'>) => {
+    if (!user) return;
+
     // Check if income already exists for this date
     const existing = incomes.find(i => i.date === income.date);
 
-    let undoAction: UndoAction;
-
     if (existing) {
-      // Store previous state for undo
-      undoAction = {
-        type: 'UPDATE_INCOME',
-        data: { id: existing.id, previous: { ...existing }, updated: null },
-        timestamp: Date.now()
-      };
-
-      // Update existing record with different behavior per platform
+      // Update existing record
       const updated = {
-        ...existing,
-        doordash: existing.doordash + income.doordash, // DoorDash: Add to previous
+        doordash: existing.doordash + income.doordash,
         ubereats: income.ubereats > 0 ? income.ubereats : existing.ubereats,
         didi: income.didi > 0 ? income.didi : existing.didi,
         coles: income.coles > 0 ? income.coles : existing.coles,
-        tips: existing.tips + income.tips // Tips: Add to previous
+        tips: existing.tips + income.tips
       };
 
-      undoAction.data.updated = updated;
+      const { error } = await supabase
+        .from('incomes')
+        .update(updated)
+        .eq('id', existing.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
 
       setIncomes(prev => prev.map(item => 
-        item.id === existing.id ? updated : item
+        item.id === existing.id ? { ...item, ...updated } : item
       ));
     } else {
-      const newIncome = { ...income, id: generateId() };
-      
-      // Store undo action
-      undoAction = {
-        type: 'ADD_INCOME',
-        data: newIncome,
-        timestamp: Date.now()
+      const { data, error } = await supabase
+        .from('incomes')
+        .insert({
+          user_id: user.id,
+          date: income.date,
+          doordash: income.doordash,
+          ubereats: income.ubereats,
+          didi: income.didi,
+          coles: income.coles,
+          tips: income.tips
+        })
+        .select()
+        .single();
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      const newIncome: Income = {
+        id: data.id,
+        date: data.date,
+        doordash: data.doordash || 0,
+        ubereats: data.ubereats || 0,
+        didi: data.didi || 0,
+        coles: data.coles || 0,
+        tips: data.tips || 0
       };
 
       setIncomes(prev => [newIncome, ...prev].sort((a, b) => 
@@ -155,131 +192,146 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ));
     }
 
-    // Add to undo stack (keep only last 10 actions)
-    setUndoStack(prev => [undoAction, ...prev.slice(0, 9)]);
-
-    toast({
-      title: "Income added",
-      description: "Your income has been saved successfully."
-    });
+    toast({ title: "Income added", description: "Your income has been saved successfully." });
   };
 
-  const addExpense = (expense: Omit<Expense, 'id'>) => {
-    const newExpense = { ...expense, id: generateId() };
+  const addExpense = async (expense: Omit<Expense, 'id'>) => {
+    if (!user) return;
 
-    // Store undo action
-    const undoAction: UndoAction = {
-      type: 'ADD_EXPENSE',
-      data: newExpense,
-      timestamp: Date.now()
+    const { data, error } = await supabase
+      .from('expenses')
+      .insert({
+        user_id: user.id,
+        date: expense.date,
+        name: expense.name,
+        amount: expense.amount
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const newExpense: Expense = {
+      id: data.id,
+      date: data.date,
+      name: data.name,
+      amount: data.amount
     };
 
     setExpenses(prev => [newExpense, ...prev].sort((a, b) => 
       toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()
     ));
-    
-    // Add to undo stack
-    setUndoStack(prev => [undoAction, ...prev.slice(0, 9)]);
 
-    toast({
-      title: "Expense added",
-      description: "Your expense has been saved successfully."
-    });
+    toast({ title: "Expense added", description: "Your expense has been saved successfully." });
   };
 
-  const deleteIncome = (id: string) => {
+  const deleteIncome = async (id: string) => {
+    const { error } = await supabase.from('incomes').delete().eq('id', id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
     setIncomes(prev => prev.filter(income => income.id !== id));
-    toast({
-      title: "Income deleted",
-      description: "The income record has been removed."
-    });
+    toast({ title: "Income deleted", description: "The income record has been removed." });
   };
 
-  const deleteExpense = (id: string) => {
+  const deleteExpense = async (id: string) => {
+    const { error } = await supabase.from('expenses').delete().eq('id', id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
     setExpenses(prev => prev.filter(expense => expense.id !== id));
-    toast({
-      title: "Expense deleted",
-      description: "The expense record has been removed."
-    });
+    toast({ title: "Expense deleted", description: "The expense record has been removed." });
   };
 
-  const resetData = () => {
-    setIncomes([]);
-    setExpenses([]);
-    setTaxRateState(20);
-    setWeeklyTargetState(0);
-    localStorage.removeItem('gigzen-incomes');
-    localStorage.removeItem('gigzen-expenses');
-    localStorage.removeItem('gigzen-taxrate');
-    localStorage.removeItem('gigzen-weeklytarget');
+  const updateIncome = async (id: string, income: Omit<Income, 'id'>) => {
+    const { error } = await supabase
+      .from('incomes')
+      .update({
+        date: income.date,
+        doordash: income.doordash,
+        ubereats: income.ubereats,
+        didi: income.didi,
+        coles: income.coles,
+        tips: income.tips
+      })
+      .eq('id', id);
 
-    toast({
-      title: "Data reset",
-      description: "All your data has been cleared."
-    });
-  };
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
 
-  const updateIncome = (id: string, income: Omit<Income, 'id'>) => {
     setIncomes(prev => prev.map(item => 
       item.id === id ? { ...income, id } : item
     ).sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()));
 
-    toast({
-      title: "Income updated",
-      description: "Your income has been updated successfully."
-    });
+    toast({ title: "Income updated", description: "Your income has been updated successfully." });
   };
 
-  const updateExpense = (id: string, expense: Omit<Expense, 'id'>) => {
+  const updateExpense = async (id: string, expense: Omit<Expense, 'id'>) => {
+    const { error } = await supabase
+      .from('expenses')
+      .update({
+        date: expense.date,
+        name: expense.name,
+        amount: expense.amount
+      })
+      .eq('id', id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
     setExpenses(prev => prev.map(item => 
       item.id === id ? { ...expense, id } : item
     ).sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()));
 
-    toast({
-      title: "Expense updated",
-      description: "Your expense has been updated successfully."
-    });
+    toast({ title: "Expense updated", description: "Your expense has been updated successfully." });
   };
 
-  const setTaxRate = (rate: number) => {
+  const setTaxRate = async (rate: number) => {
     setTaxRateState(rate);
+    if (user) {
+      await supabase
+        .from('user_settings')
+        .upsert({ user_id: user.id, tax_rate: rate }, { onConflict: 'user_id' });
+    }
   };
 
-  const setWeeklyTarget = (target: number) => {
+  const setWeeklyTarget = async (target: number) => {
     setWeeklyTargetState(target);
+    if (user) {
+      await supabase
+        .from('user_settings')
+        .upsert({ user_id: user.id, weekly_target: target }, { onConflict: 'user_id' });
+    }
+  };
+
+  const resetData = async () => {
+    if (!user) return;
+    
+    await supabase.from('incomes').delete().eq('user_id', user.id);
+    await supabase.from('expenses').delete().eq('user_id', user.id);
+    
+    setIncomes([]);
+    setExpenses([]);
+    setTaxRateState(20);
+    setWeeklyTargetState(0);
+
+    toast({ title: "Data reset", description: "All your data has been cleared." });
   };
 
   const undo = () => {
-    if (undoStack.length === 0) return;
-
-    const lastAction = undoStack[0];
-    
-    switch (lastAction.type) {
-      case 'ADD_INCOME':
-        setIncomes(prev => prev.filter(item => item.id !== lastAction.data.id));
-        break;
-        
-      case 'ADD_EXPENSE':
-        setExpenses(prev => prev.filter(item => item.id !== lastAction.data.id));
-        break;
-        
-      case 'UPDATE_INCOME':
-        setIncomes(prev => prev.map(item => 
-          item.id === lastAction.data.id ? lastAction.data.previous : item
-        ));
-        break;
-    }
-
-    // Remove action from undo stack
-    setUndoStack(prev => prev.slice(1));
-
-    toast({
-      title: "Action undone",
-      description: "Your last action has been reversed."
-    });
+    toast({ title: "Undo not available", description: "Undo is not supported with cloud storage." });
   };
 
-  const canUndo = undoStack.length > 0;
+  const canUndo = false;
 
   return (
     <DataContext.Provider value={{
