@@ -1,12 +1,23 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Home, Settings, LogOut } from 'lucide-react';
+import { BarChart3, Home, Settings, LogOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export function Navigation() {
   const location = useLocation();
-  const { taxRate, setTaxRate } = useData();
+  const { taxRate, setTaxRate, resetData } = useData();
   const { signOut } = useAuth();
 
   return (
@@ -40,6 +51,35 @@ export function Navigation() {
           <Settings className="h-4 w-4 mr-1" />
           Tax: {taxRate}%
         </Button>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-warning/50 text-warning hover:bg-warning hover:text-warning-foreground"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              New Week
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Start a New Week?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will archive all your current income and expense records and reset your weekly progress. 
+                Your historical data will be saved but won't appear in the dashboard or tables.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={resetData}>
+                Start Fresh
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
         <Button
           variant="outline"
           size="sm"
