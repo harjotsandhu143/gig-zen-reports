@@ -1,4 +1,4 @@
-import { FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +65,16 @@ export function Dashboard() {
   
   // Calculate remaining to meet target
   const remaining = weeklyTarget - totalIncome;
+  
+  // Calculate today's earnings
+  const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
+  const todaysIncome = incomes
+    .filter(income => formatAustraliaDate(income.date, 'yyyy-MM-dd') === today)
+    .reduce((sum, income) => {
+      const { tax } = calculateWeeklyTax(income.coles);
+      const colesNet = income.coles - tax;
+      return sum + income.doordash + income.ubereats + income.didi + income.tips + colesNet;
+    }, 0);
   
   // Calculate weekly Coles income with tax for selected week
   const selectedWeekDate = addWeeks(new Date(), selectedWeekOffset);
@@ -201,20 +211,20 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Remaining Amount Card */}
-        <Card className={`group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in ${remaining <= 0 ? 'bg-gradient-to-br from-card to-success/10' : 'bg-gradient-to-br from-card to-warning/10'}`} style={{ animationDelay: '0.1s' }}>
+        {/* Today's Earnings Card */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-2xl transition-colors ${remaining > 0 ? 'bg-warning/10 group-hover:bg-warning/20' : 'bg-success/10 group-hover:bg-success/20'}`}>
-                <Target className={`h-6 w-6 ${remaining > 0 ? 'text-warning' : 'text-success'}`} />
+              <div className="p-3 rounded-2xl transition-colors bg-success/10 group-hover:bg-success/20">
+                <TrendingUp className="h-6 w-6 text-success" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Remaining</p>
-                <p className={`text-3xl font-bold mt-1 ${remaining > 0 ? 'text-warning' : 'text-success'}`}>
-                  ${Math.abs(remaining).toFixed(2)}
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Today's Earnings</p>
+                <p className="text-3xl font-bold mt-1 text-success">
+                  ${todaysIncome.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {remaining > 0 ? 'To reach target' : 'Target exceeded!'}
+                  {formatAustraliaDate(new Date(), 'EEEE, MMM d')}
                 </p>
               </div>
             </div>
