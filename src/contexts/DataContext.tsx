@@ -70,11 +70,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Load incomes
+        // Load incomes (only non-archived)
         const { data: incomesData, error: incomesError } = await supabase
           .from('incomes')
           .select('*')
           .eq('user_id', user.id)
+          .eq('archived', false)
           .order('date', { ascending: false });
 
         if (incomesError) throw incomesError;
@@ -90,11 +91,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }));
         setIncomes(mappedIncomes);
 
-        // Load expenses
+        // Load expenses (only non-archived)
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('*')
           .eq('user_id', user.id)
+          .eq('archived', false)
           .order('date', { ascending: false });
 
         if (expensesError) throw expensesError;
@@ -316,15 +318,29 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const resetData = async () => {
     if (!user) return;
     
-    await supabase.from('incomes').delete().eq('user_id', user.id);
-    await supabase.from('expenses').delete().eq('user_id', user.id);
+    // Archive all current income and expense records instead of deleting
+    await supabase
+      .from('incomes')
+      .update({ archived: true })
+      .eq('user_id', user.id)
+      .eq('archived', false);
+      
+    await supabase
+      .from('expenses')
+      .update({ archived: true })
+      .eq('user_id', user.id)
+      .eq('archived', false);
     
     setIncomes([]);
     setExpenses([]);
-    setTaxRateState(20);
     setWeeklyTargetState(0);
+    
+    // Reset weekly target in database
+    await supabase
+      .from('user_settings')
+      .upsert({ user_id: user.id, weekly_target: 0 }, { onConflict: 'user_id' });
 
-    toast({ title: "Data reset", description: "All your data has been cleared." });
+    toast({ title: "Week reset", description: "Your data has been archived. Starting fresh!" });
   };
 
   const undo = () => {

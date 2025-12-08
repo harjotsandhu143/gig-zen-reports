@@ -17,6 +17,7 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          archived: boolean
           created_at: string
           date: string
           id: string
@@ -26,6 +27,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          archived?: boolean
           created_at?: string
           date: string
           id?: string
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          archived?: boolean
           created_at?: string
           date?: string
           id?: string
@@ -46,6 +49,7 @@ export type Database = {
       }
       incomes: {
         Row: {
+          archived: boolean
           coles: number | null
           created_at: string
           date: string
@@ -58,6 +62,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived?: boolean
           coles?: number | null
           created_at?: string
           date: string
@@ -70,6 +75,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived?: boolean
           coles?: number | null
           created_at?: string
           date?: string
