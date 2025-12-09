@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ColesCalculatorDialog } from "./ColesCalculatorDialog";
 import { getAustraliaDateString } from "@/utils/timezone";
 
 interface Income {
@@ -166,7 +167,13 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
             </div>
 
             <div>
-              <Label htmlFor="coles">Coles</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="coles">Coles</Label>
+                <ColesCalculatorDialog 
+                  currentDate={formData.date}
+                  onCalculate={(grossPay) => handleInputChange('coles', grossPay.toFixed(2))}
+                />
+              </div>
               <Input
                 id="coles"
                 type="number"
