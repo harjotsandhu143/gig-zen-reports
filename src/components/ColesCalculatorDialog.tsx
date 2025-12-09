@@ -41,6 +41,8 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
   const [estimatedTax, setEstimatedTax] = useState(0);
   const [estimatedNet, setEstimatedNet] = useState(0);
   const [calculated, setCalculated] = useState(false);
+  const [breakDuration, setBreakDuration] = useState(0);
+  const [totalShiftHours, setTotalShiftHours] = useState(0);
 
   const parseTime = (time: string): number => {
     const [hours, minutes] = time.split(":").map(Number);
@@ -55,6 +57,13 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
     return "weekday";
   };
 
+  const getBreakDuration = (shiftHours: number): number => {
+    // Break rules: 6+ hours = 30 min break, 9+ hours = 1 hour break
+    if (shiftHours >= 9) return 1;
+    if (shiftHours >= 6) return 0.5;
+    return 0;
+  };
+
   const calculatePay = () => {
     const rates = WAGE_RATES[age];
     const startHour = parseTime(startTime);
@@ -62,63 +71,94 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
     const dayType = getDayType(shiftDate);
     
     const payBreakdown: PayBreakdown[] = [];
-    let totalHours = 0;
     
     if (endHour <= startHour) {
       // Invalid time range
       return;
     }
 
-    totalHours = endHour - startHour;
+    const shiftHours = endHour - startHour;
+    const breakHours = getBreakDuration(shiftHours);
+    const paidHours = shiftHours - breakHours;
+    
+    setTotalShiftHours(shiftHours);
+    setBreakDuration(breakHours);
 
     if (isPublicHoliday) {
       // All hours at public holiday rate
       payBreakdown.push({
-        hours: totalHours,
+        hours: paidHours,
         rate: rates.publicHoliday,
         rateName: "Public Holiday",
-        subtotal: totalHours * rates.publicHoliday,
+        subtotal: paidHours * rates.publicHoliday,
       });
     } else if (dayType === "sunday") {
       // All hours at Sunday rate (9am-11pm)
       payBreakdown.push({
-        hours: totalHours,
+        hours: paidHours,
         rate: rates.sunday,
         rateName: "Sunday",
-        subtotal: totalHours * rates.sunday,
+        subtotal: paidHours * rates.sunday,
       });
     } else if (dayType === "saturday") {
       // All hours at Saturday rate (7am-11pm)
       payBreakdown.push({
-        hours: totalHours,
+        hours: paidHours,
         rate: rates.saturday,
         rateName: "Saturday",
-        subtotal: totalHours * rates.saturday,
+        subtotal: paidHours * rates.saturday,
       });
     } else {
       // Weekday - split by base (7am-6pm) and evening (6pm-11pm)
       const eveningStart = 18; // 6pm
       
+      // Calculate how the break affects the time split
+      // Break is taken in the middle of the shift
+      const breakStart = startHour + (shiftHours / 2) - (breakHours / 2);
+      const breakEnd = breakStart + breakHours;
+      
       if (endHour <= eveningStart) {
         // All hours are base rate
         payBreakdown.push({
-          hours: totalHours,
+          hours: paidHours,
           rate: rates.base,
           rateName: "Base Rate (Mon-Fri 7am-6pm)",
-          subtotal: totalHours * rates.base,
+          subtotal: paidHours * rates.base,
         });
       } else if (startHour >= eveningStart) {
         // All hours are evening rate
         payBreakdown.push({
-          hours: totalHours,
+          hours: paidHours,
           rate: rates.evening,
           rateName: "Evening (Mon-Fri 6pm-11pm)",
-          subtotal: totalHours * rates.evening,
+          subtotal: paidHours * rates.evening,
         });
       } else {
-        // Split between base and evening
-        const baseHours = eveningStart - startHour;
-        const eveningHours = endHour - eveningStart;
+        // Split between base and evening, accounting for break in the middle
+        let baseHours = Math.min(eveningStart, endHour) - startHour;
+        let eveningHours = endHour - Math.max(eveningStart, startHour);
+        
+        if (eveningStart > startHour && eveningStart < endHour) {
+          baseHours = eveningStart - startHour;
+          eveningHours = endHour - eveningStart;
+        }
+        
+        // Deduct break proportionally from the period it falls in
+        if (breakHours > 0) {
+          if (breakEnd <= eveningStart) {
+            // Break is entirely in base time
+            baseHours -= breakHours;
+          } else if (breakStart >= eveningStart) {
+            // Break is entirely in evening time
+            eveningHours -= breakHours;
+          } else {
+            // Break spans across base and evening
+            const breakInBase = eveningStart - breakStart;
+            const breakInEvening = breakEnd - eveningStart;
+            baseHours -= breakInBase;
+            eveningHours -= breakInEvening;
+          }
+        }
         
         if (baseHours > 0) {
           payBreakdown.push({
@@ -173,6 +213,8 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
     setEstimatedTax(0);
     setEstimatedNet(0);
     setCalculated(false);
+    setBreakDuration(0);
+    setTotalShiftHours(0);
   };
 
   const formatDate = (dateStr: string) => {
@@ -299,11 +341,16 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
               <CardContent className="pt-4 space-y-3">
                 <h4 className="font-semibold text-sm">Shift Summary for {formatDate(shiftDate)}</h4>
                 
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <p className="flex items-center gap-2">
                     <Clock className="h-3 w-3" />
-                    {startTime} – {endTime} ({breakdown.reduce((sum, b) => sum + b.hours, 0).toFixed(1)} hrs)
+                    {startTime} – {endTime} ({totalShiftHours.toFixed(1)} hrs shift)
                   </p>
+                  {breakDuration > 0 && (
+                    <p className="text-xs">
+                      Break: {breakDuration * 60} min (unpaid) • Paid hours: {(totalShiftHours - breakDuration).toFixed(1)} hrs
+                    </p>
+                  )}
                 </div>
 
                 <Separator />
