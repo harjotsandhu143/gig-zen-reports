@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { format, parseISO, getDay } from "date-fns";
 import { getAustraliaDateString } from "@/utils/timezone";
+import { calculateWeeklyTax } from "@/utils/taxCalculator";
 
 interface ColesCalculatorDialogProps {
   onCalculate: (grossPay: number) => void;
@@ -182,22 +183,13 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
 
     const gross = payBreakdown.reduce((sum, item) => sum + item.subtotal, 0);
     
-    // Estimate tax (simplified weekly estimation)
-    let tax = 0;
-    if (gross > 359) {
-      if (gross <= 548) {
-        tax = (gross - 359) * 0.16;
-      } else if (gross <= 900) {
-        tax = gross * 0.20;
-      } else {
-        tax = gross * 0.25;
-      }
-    }
+    // Use ATO Weekly Tax Table (Resident with Tax-Free Threshold - Scale 2)
+    const { tax, netPay } = calculateWeeklyTax(gross);
 
     setBreakdown(payBreakdown);
     setTotalGross(gross);
     setEstimatedTax(tax);
-    setEstimatedNet(gross - tax);
+    setEstimatedNet(netPay);
     setCalculated(true);
   };
 
