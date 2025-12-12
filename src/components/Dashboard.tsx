@@ -66,15 +66,19 @@ export function Dashboard() {
   // Calculate remaining to meet target
   const remaining = weeklyTarget - totalIncome;
   
-  // Calculate today's earnings
+  // Calculate today's earnings by source
   const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
-  const todaysIncome = incomes
-    .filter(income => formatAustraliaDate(income.date, 'yyyy-MM-dd') === today)
-    .reduce((sum, income) => {
-      const { tax } = calculateWeeklyTax(income.coles);
-      const colesNet = income.coles - tax;
-      return sum + income.doordash + income.ubereats + income.didi + income.tips + colesNet;
-    }, 0);
+  const todaysIncomes = incomes.filter(income => formatAustraliaDate(income.date, 'yyyy-MM-dd') === today);
+  
+  const todayDoordash = todaysIncomes.reduce((sum, income) => sum + income.doordash, 0);
+  const todayUbereats = todaysIncomes.reduce((sum, income) => sum + income.ubereats, 0);
+  const todayDidi = todaysIncomes.reduce((sum, income) => sum + income.didi, 0);
+  const todayTips = todaysIncomes.reduce((sum, income) => sum + income.tips, 0);
+  const todayColesGross = todaysIncomes.reduce((sum, income) => sum + income.coles, 0);
+  const { tax: todayColesTax } = calculateWeeklyTax(todayColesGross);
+  const todayColesNet = todayColesGross - todayColesTax;
+  
+  const todaysIncome = todayDoordash + todayUbereats + todayDidi + todayTips + todayColesNet;
   
   // Calculate weekly Coles income with tax for selected week
   const selectedWeekDate = addWeeks(new Date(), selectedWeekOffset);
@@ -186,26 +190,24 @@ export function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {/* Weekly Target Input Card */}
-        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-primary/5 animate-fade-in">
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0s' }}>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+              <div className="p-3 rounded-2xl transition-colors bg-primary/10 group-hover:bg-primary/20">
                 <Target className="h-6 w-6 text-primary" />
               </div>
-              <div className="flex-1">
+              <div>
                 <Label htmlFor="weekly-target" className="text-xs uppercase tracking-wide text-muted-foreground">Weekly Target</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    id="weekly-target"
-                    type="number"
-                    value={targetInput}
-                    onChange={(e) => setTargetInput(e.target.value)}
-                    onBlur={handleTargetUpdate}
-                    onKeyDown={(e) => e.key === 'Enter' && handleTargetUpdate()}
-                    className="h-10 text-xl font-bold border-primary/20 focus:border-primary bg-background/50"
-                    placeholder="0"
-                  />
-                </div>
+                <Input
+                  id="weekly-target"
+                  type="number"
+                  value={targetInput}
+                  onChange={(e) => setTargetInput(e.target.value)}
+                  onBlur={handleTargetUpdate}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTargetUpdate()}
+                  className="h-12 text-3xl font-bold border-0 bg-transparent p-0 mt-1 focus-visible:ring-0"
+                  placeholder="0"
+                />
               </div>
             </div>
           </CardContent>
@@ -291,14 +293,14 @@ export function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
-                  { name: 'DoorDash', amount: doordashIncome },
-                  { name: 'Uber Eats', amount: ubereatsIncome },
-                  { name: 'DiDi', amount: didiIncome },
-                  { name: 'Coles (Net)', amount: colesNetIncome }
+                  { name: 'DoorDash', weekly: doordashIncome, today: todayDoordash },
+                  { name: 'Uber Eats', weekly: ubereatsIncome, today: todayUbereats },
+                  { name: 'DiDi', weekly: didiIncome, today: todayDidi },
+                  { name: 'Coles (Net)', weekly: colesNetIncome, today: todayColesNet }
                 ]}
                 layout="vertical"
                 margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
@@ -318,7 +320,10 @@ export function Dashboard() {
                   tick={{ fill: 'hsl(var(--foreground))', fontSize: 13, fontWeight: 500 }}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Earned']}
+                  formatter={(value: number, name: string) => [
+                    `$${value.toFixed(2)}`, 
+                    name === 'weekly' ? 'Weekly' : 'Today'
+                  ]}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: 'none',
@@ -327,14 +332,30 @@ export function Dashboard() {
                   }}
                   cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                 />
-                <Bar dataKey="amount" radius={[0, 8, 8, 0]} barSize={24}>
+                <Bar dataKey="weekly" radius={[0, 8, 8, 0]} barSize={20} name="weekly">
                   <Cell fill="hsl(var(--destructive))" />
                   <Cell fill="hsl(var(--success))" />
                   <Cell fill="hsl(var(--warning))" />
                   <Cell fill="hsl(var(--primary))" />
                 </Bar>
+                <Bar dataKey="today" radius={[0, 8, 8, 0]} barSize={20} name="today">
+                  <Cell fill="hsl(var(--destructive) / 0.5)" />
+                  <Cell fill="hsl(var(--success) / 0.5)" />
+                  <Cell fill="hsl(var(--warning) / 0.5)" />
+                  <Cell fill="hsl(var(--primary) / 0.5)" />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center gap-6 mt-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm bg-success"></div>
+              <span className="text-muted-foreground">Weekly</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm bg-success/50"></div>
+              <span className="text-muted-foreground">Today</span>
+            </div>
           </div>
         </CardContent>
       </Card>
