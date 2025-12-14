@@ -11,6 +11,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  colesHours: number | null;
   tips: number;
 }
 
@@ -87,6 +88,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ubereats: inc.ubereats || 0,
           didi: inc.didi || 0,
           coles: inc.coles || 0,
+          colesHours: inc.coles_hours ?? null,
           tips: inc.tips || 0
         }));
         setIncomes(mappedIncomes);
@@ -143,6 +145,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         ubereats: income.ubereats > 0 ? income.ubereats : existing.ubereats,
         didi: income.didi > 0 ? income.didi : existing.didi,
         coles: income.coles > 0 ? income.coles : existing.coles,
+        coles_hours: income.colesHours !== null ? income.colesHours : existing.colesHours,
         tips: existing.tips + income.tips
       };
 
@@ -157,7 +160,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       }
 
       setIncomes(prev => prev.map(item => 
-        item.id === existing.id ? { ...item, ...updated } : item
+        item.id === existing.id ? { 
+          ...item, 
+          ...updated,
+          colesHours: updated.coles_hours ?? item.colesHours
+        } : item
       ));
     } else {
       const { data, error } = await supabase
@@ -169,6 +176,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ubereats: income.ubereats,
           didi: income.didi,
           coles: income.coles,
+          coles_hours: income.colesHours,
           tips: income.tips
         })
         .select()
@@ -186,6 +194,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         ubereats: data.ubereats || 0,
         didi: data.didi || 0,
         coles: data.coles || 0,
+        colesHours: data.coles_hours ?? null,
         tips: data.tips || 0
       };
 
@@ -259,6 +268,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         ubereats: income.ubereats,
         didi: income.didi,
         coles: income.coles,
+        coles_hours: income.colesHours,
         tips: income.tips
       })
       .eq('id', id);

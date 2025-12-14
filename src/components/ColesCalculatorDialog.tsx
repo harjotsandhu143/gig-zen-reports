@@ -12,15 +12,15 @@ import { getAustraliaDateString } from "@/utils/timezone";
 import { calculateWeeklyTax } from "@/utils/taxCalculator";
 
 interface ColesCalculatorDialogProps {
-  onCalculate: (grossPay: number) => void;
+  onCalculate: (grossPay: number, hours: number) => void;
   currentDate: string;
 }
 
 // Wage rates based on Coles Retail Enterprise Agreement 2024 (July 2025 rates)
 const WAGE_RATES = {
-  "20+": { base: 27.14, evening: 33.92, saturday: 33.92, sunday: 40.70, publicHoliday: 61.05 },
-  "19": { base: 21.84, evening: 27.30, saturday: 27.30, sunday: 32.77, publicHoliday: 49.15 },
-  "18": { base: 19.27, evening: 24.08, saturday: 24.08, sunday: 28.90, publicHoliday: 43.35 },
+  "20+": { base: 27.14, evening: 33.92, saturday: 33.92, sunday: 40.70, sundayMorning: 54.27, publicHoliday: 61.05 },
+  "19": { base: 21.84, evening: 27.30, saturday: 27.30, sunday: 32.77, sundayMorning: 43.68, publicHoliday: 49.15 },
+  "18": { base: 19.27, evening: 24.08, saturday: 24.08, sunday: 28.90, sundayMorning: 38.53, publicHoliday: 43.35 },
 };
 
 interface PayBreakdown {
@@ -94,13 +94,48 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
         subtotal: paidHours * rates.publicHoliday,
       });
     } else if (dayType === "sunday") {
-      // All hours at Sunday rate (9am-11pm)
-      payBreakdown.push({
-        hours: paidHours,
-        rate: rates.sunday,
-        rateName: "Sunday",
-        subtotal: paidHours * rates.sunday,
-      });
+      // Sunday has special morning rate 8am-9am = $54.27
+      const sundayMorningStart = 8;
+      const sundayMorningEnd = 9;
+      
+      // Calculate hours in Sunday morning period (8-9 AM)
+      const morningHoursStart = Math.max(startHour, sundayMorningStart);
+      const morningHoursEnd = Math.min(endHour, sundayMorningEnd);
+      let sundayMorningHours = Math.max(0, morningHoursEnd - morningHoursStart);
+      
+      // Calculate remaining Sunday hours
+      let regularSundayHours = paidHours - sundayMorningHours;
+      
+      // If break falls within morning period, deduct from morning hours
+      if (breakHours > 0) {
+        const breakStart = startHour + (shiftHours / 2) - (breakHours / 2);
+        const breakEnd = breakStart + breakHours;
+        
+        // Check how much break overlaps with morning period
+        const breakInMorning = Math.max(0, Math.min(breakEnd, sundayMorningEnd) - Math.max(breakStart, sundayMorningStart));
+        const breakInRegular = breakHours - breakInMorning;
+        
+        sundayMorningHours = Math.max(0, sundayMorningHours - breakInMorning);
+        regularSundayHours = Math.max(0, regularSundayHours - breakInRegular + breakInMorning);
+      }
+      
+      if (sundayMorningHours > 0) {
+        payBreakdown.push({
+          hours: sundayMorningHours,
+          rate: rates.sundayMorning,
+          rateName: "Sunday Morning (8am-9am)",
+          subtotal: sundayMorningHours * rates.sundayMorning,
+        });
+      }
+      
+      if (regularSundayHours > 0) {
+        payBreakdown.push({
+          hours: regularSundayHours,
+          rate: rates.sunday,
+          rateName: "Sunday",
+          subtotal: regularSundayHours * rates.sunday,
+        });
+      }
     } else if (dayType === "saturday") {
       // All hours at Saturday rate (7am-11pm)
       payBreakdown.push({
@@ -194,7 +229,8 @@ export function ColesCalculatorDialog({ onCalculate, currentDate }: ColesCalcula
   };
 
   const handleUseAmount = () => {
-    onCalculate(totalGross);
+    const paidHours = totalShiftHours - breakDuration;
+    onCalculate(totalGross, paidHours);
     setOpen(false);
     resetForm();
   };

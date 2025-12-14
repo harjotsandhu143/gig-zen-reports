@@ -18,6 +18,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  colesHours: number | null;
   tips: number;
 }
 
@@ -34,6 +35,7 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
     ubereats: income.ubereats.toString(),
     didi: income.didi.toString(),
     coles: income.coles.toString(),
+    colesHours: income.colesHours?.toString() || '',
     tips: income.tips.toString()
   });
 
@@ -46,6 +48,7 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
       ubereats: parseFloat(formData.ubereats) || 0,
       didi: parseFloat(formData.didi) || 0,
       coles: parseFloat(formData.coles) || 0,
+      colesHours: formData.colesHours ? parseFloat(formData.colesHours) : null,
       tips: parseFloat(formData.tips) || 0
     };
     
@@ -139,6 +142,19 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
                 placeholder="0.00"
                 value={formData.coles}
                 onChange={(e) => handleInputChange('coles', e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="colesHours">Coles Hours</Label>
+              <Input
+                id="colesHours"
+                type="number"
+                step="0.1"
+                min="0"
+                placeholder="0.0"
+                value={formData.colesHours}
+                onChange={(e) => handleInputChange('colesHours', e.target.value)}
               />
             </div>
             

@@ -10,6 +10,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  colesHours: number | null;
   tips: number;
 }
 
@@ -45,6 +46,7 @@ export const generateFinancialReport = (
   const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
   const tipsIncome = incomes.reduce((sum, income) => sum + income.tips, 0);
   const colesGrossIncome = incomes.reduce((sum, income) => sum + income.coles, 0);
+  const totalColesHours = incomes.reduce((sum, income) => sum + (income.colesHours || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
   // Calculate total Coles tax across all entries
@@ -127,6 +129,7 @@ export const generateFinancialReport = (
     ['DiDi', `$${didiIncome.toFixed(2)}`],
     ['Tips', `$${tipsIncome.toFixed(2)}`],
     ['Coles (Gross)', `$${colesGrossIncome.toFixed(2)}`],
+    ['Coles Hours Worked', `${totalColesHours.toFixed(1)} hrs`],
     ['Coles Tax Withheld', `-$${totalColesTax.toFixed(2)}`],
     ['Coles (Net)', `$${colesNetIncome.toFixed(2)}`],
     ['Total Income (After Tax)', `$${totalIncome.toFixed(2)}`]
@@ -185,18 +188,20 @@ export const generateFinancialReport = (
       `$${income.ubereats.toFixed(2)}`,
       `$${income.didi.toFixed(2)}`,
       `$${income.coles.toFixed(2)}`,
+      income.colesHours ? `${income.colesHours.toFixed(1)}h` : '-',
       `$${income.tips.toFixed(2)}`,
       `$${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}`
     ]);
     
     autoTable(doc, {
-      head: [['Date', 'DoorDash', 'UberEats', 'DiDi', 'Coles', 'Tips', 'Total']],
+      head: [['Date', 'DoorDash', 'UberEats', 'DiDi', 'Coles', 'Hrs', 'Tips', 'Total']],
       body: incomeData,
       startY: yPosition,
       theme: 'grid',
       headStyles: { fillColor: [46, 204, 113], textColor: 255 },
       alternateRowStyles: { fillColor: [245, 247, 250] },
-      margin: { left: 20, right: 20 }
+      margin: { left: 20, right: 20 },
+      styles: { fontSize: 9 }
     });
     
     yPosition = (doc as any).lastAutoTable.finalY + 20;
