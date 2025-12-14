@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           archived: boolean
           coles: number | null
+          coles_hours: number | null
           created_at: string
           date: string
           didi: number | null
@@ -64,6 +65,7 @@ export type Database = {
         Insert: {
           archived?: boolean
           coles?: number | null
+          coles_hours?: number | null
           created_at?: string
           date: string
           didi?: number | null
@@ -77,6 +79,7 @@ export type Database = {
         Update: {
           archived?: boolean
           coles?: number | null
+          coles_hours?: number | null
           created_at?: string
           date?: string
           didi?: number | null

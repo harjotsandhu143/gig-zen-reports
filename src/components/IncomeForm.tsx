@@ -13,6 +13,7 @@ interface Income {
   ubereats: number;
   didi: number;
   coles: number;
+  colesHours: number | null;
   tips: number;
 }
 
@@ -28,6 +29,7 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
     ubereats: '',
     didi: '',
     coles: '',
+    colesHours: '',
     tips: ''
   });
 
@@ -58,6 +60,7 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
       ubereats: parseFloat(formData.ubereats) || 0,
       didi: parseFloat(formData.didi) || 0,
       coles: parseFloat(formData.coles) || 0,
+      colesHours: formData.colesHours ? parseFloat(formData.colesHours) : null,
       tips: parseFloat(formData.tips) || 0,
     };
     
@@ -70,6 +73,7 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
       ubereats: '',
       didi: '',
       coles: '',
+      colesHours: '',
       tips: ''
     });
     setIsOpen(false);
@@ -171,7 +175,10 @@ export function IncomeForm({ onIncomeAdd }: IncomeFormProps) {
                 <Label htmlFor="coles">Coles</Label>
                 <ColesCalculatorDialog 
                   currentDate={formData.date}
-                  onCalculate={(grossPay) => handleInputChange('coles', grossPay.toFixed(2))}
+                  onCalculate={(grossPay, hours) => {
+                    handleInputChange('coles', grossPay.toFixed(2));
+                    handleInputChange('colesHours', hours.toFixed(1));
+                  }}
                 />
               </div>
               <Input
