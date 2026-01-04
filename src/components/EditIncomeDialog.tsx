@@ -10,6 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { INCOME_TYPES } from "@/utils/atoTaxCalculator";
 
 interface Income {
   id: string;
@@ -20,6 +28,8 @@ interface Income {
   coles: number;
   colesHours: number | null;
   tips: number;
+  sourceName: string | null;
+  incomeType: string;
 }
 
 interface EditIncomeDialogProps {
@@ -29,27 +39,59 @@ interface EditIncomeDialogProps {
 
 export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
   const [open, setOpen] = useState(false);
+  
+  // Determine the display amount (total of all sources)
+  const totalAmount = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
+  
+  // Determine the source name for display
+  const getSourceName = () => {
+    if (income.sourceName) return income.sourceName;
+    if (income.doordash > 0) return 'DoorDash';
+    if (income.ubereats > 0) return 'Uber Eats';
+    if (income.didi > 0) return 'DiDi';
+    if (income.coles > 0) return 'Coles';
+    return 'Other';
+  };
+
   const [formData, setFormData] = useState({
     date: income.date,
-    doordash: income.doordash.toString(),
-    ubereats: income.ubereats.toString(),
-    didi: income.didi.toString(),
-    coles: income.coles.toString(),
-    colesHours: income.colesHours?.toString() || '',
-    tips: income.tips.toString()
+    amount: totalAmount.toString(),
+    sourceName: getSourceName(),
+    incomeType: income.incomeType || 'gig',
+    // Keep legacy fields for backward compatibility
+    doordash: income.doordash,
+    ubereats: income.ubereats,
+    didi: income.didi,
+    coles: income.coles,
+    colesHours: income.colesHours,
+    tips: income.tips,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const updatedIncome = {
+    const amount = parseFloat(formData.amount) || 0;
+    
+    // Map source name to legacy columns for backward compatibility
+    const legacyMapping: Record<string, string> = {
+      'Uber Eats': 'ubereats',
+      'DoorDash': 'doordash',
+      'DiDi': 'didi',
+      'Coles': 'coles',
+    };
+    
+    const legacyColumn = legacyMapping[formData.sourceName];
+    
+    const updatedIncome: Omit<Income, 'id'> = {
       date: formData.date,
-      doordash: parseFloat(formData.doordash) || 0,
-      ubereats: parseFloat(formData.ubereats) || 0,
-      didi: parseFloat(formData.didi) || 0,
-      coles: parseFloat(formData.coles) || 0,
-      colesHours: formData.colesHours ? parseFloat(formData.colesHours) : null,
-      tips: parseFloat(formData.tips) || 0
+      doordash: legacyColumn === 'doordash' ? amount : 0,
+      ubereats: legacyColumn === 'ubereats' ? amount : 0,
+      didi: legacyColumn === 'didi' ? amount : 0,
+      coles: legacyColumn === 'coles' ? amount : 0,
+      colesHours: formData.sourceName === 'Coles' ? formData.colesHours : null,
+      tips: !legacyColumn ? amount : 0, // Use tips for non-legacy sources
+      sourceName: formData.sourceName,
+      incomeType: formData.incomeType,
     };
     
     onUpdate(income.id, updatedIncome);
@@ -76,7 +118,7 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Income Record</DialogTitle>
+          <DialogTitle>Edit Income</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -89,88 +131,70 @@ export function EditIncomeDialog({ income, onUpdate }: EditIncomeDialogProps) {
               required
             />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="doordash">DoorDash ($)</Label>
-              <Input
-                id="doordash"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.doordash}
-                onChange={(e) => handleInputChange('doordash', e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="ubereats">Uber Eats ($)</Label>
-              <Input
-                id="ubereats"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.ubereats}
-                onChange={(e) => handleInputChange('ubereats', e.target.value)}
-              />
-            </div>
+
+          <div>
+            <Label htmlFor="sourceName">Source</Label>
+            <Input
+              id="sourceName"
+              type="text"
+              value={formData.sourceName}
+              onChange={(e) => handleInputChange('sourceName', e.target.value)}
+              placeholder="e.g., Uber Eats, Coles, Freelance"
+              required
+            />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+
+          <div>
+            <Label htmlFor="incomeType">Income Type</Label>
+            <Select
+              value={formData.incomeType}
+              onValueChange={(value) => handleInputChange('incomeType', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select income type" />
+              </SelectTrigger>
+              <SelectContent>
+                {INCOME_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="amount">Amount ($)</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              value={formData.amount}
+              onChange={(e) => handleInputChange('amount', e.target.value)}
+              className="text-lg"
+              required
+            />
+          </div>
+
+          {formData.sourceName === 'Coles' && (
             <div>
-              <Label htmlFor="didi">DiDi ($)</Label>
-              <Input
-                id="didi"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.didi}
-                onChange={(e) => handleInputChange('didi', e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="coles">Coles ($)</Label>
-              <Input
-                id="coles"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.coles}
-                onChange={(e) => handleInputChange('coles', e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="colesHours">Coles Hours</Label>
+              <Label htmlFor="colesHours">Hours Worked</Label>
               <Input
                 id="colesHours"
                 type="number"
                 step="0.1"
                 min="0"
                 placeholder="0.0"
-                value={formData.colesHours}
-                onChange={(e) => handleInputChange('colesHours', e.target.value)}
+                value={formData.colesHours?.toString() || ''}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  colesHours: e.target.value ? parseFloat(e.target.value) : null
+                }))}
               />
             </div>
-            
-            <div>
-              <Label htmlFor="tips">Tips ($)</Label>
-              <Input
-                id="tips"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.tips}
-                onChange={(e) => handleInputChange('tips', e.target.value)}
-              />
-            </div>
-          </div>
+          )}
           
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

@@ -46,10 +46,10 @@ export function Navigation() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setTaxRate(taxRate === 20 ? 30 : 20)}
+          onClick={() => setTaxRate(taxRate === 20 ? 25 : taxRate === 25 ? 30 : 20)}
         >
           <Settings className="h-4 w-4 mr-1" />
-          Tax: {taxRate}%
+          Set-aside: {taxRate}%
         </Button>
         
         <AlertDialog>

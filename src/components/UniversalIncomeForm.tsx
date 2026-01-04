@@ -1,0 +1,233 @@
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getAustraliaDateString } from "@/utils/timezone";
+import { INCOME_TYPES } from "@/utils/atoTaxCalculator";
+
+const COMMON_SOURCES = [
+  "Uber Eats",
+  "DoorDash",
+  "DiDi",
+  "Coles",
+  "Woolworths",
+  "Salary",
+  "Freelance",
+  "Other",
+];
+
+interface UniversalIncomeFormProps {
+  onIncomeAdd: (income: {
+    date: string;
+    amount: number;
+    sourceName: string;
+    incomeType: string;
+  }) => void;
+}
+
+export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    date: getAustraliaDateString(),
+    amount: "",
+    sourceName: "",
+    customSource: "",
+    incomeType: "gig",
+  });
+
+  // Load form data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem("universalIncomeFormData");
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(parsedData);
+      } catch (error) {
+        console.error("Error loading saved form data:", error);
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("universalIncomeFormData", JSON.stringify(formData));
+  }, [formData]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const sourceName =
+      formData.sourceName === "Other"
+        ? formData.customSource.trim()
+        : formData.sourceName;
+
+    if (!sourceName || !formData.amount) {
+      return;
+    }
+
+    onIncomeAdd({
+      date: formData.date,
+      amount: parseFloat(formData.amount) || 0,
+      sourceName,
+      incomeType: formData.incomeType,
+    });
+
+    // Clear localStorage after successful submission
+    localStorage.removeItem("universalIncomeFormData");
+    setFormData({
+      date: getAustraliaDateString(),
+      amount: "",
+      sourceName: "",
+      customSource: "",
+      incomeType: "gig",
+    });
+    setIsOpen(false);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  if (!isOpen) {
+    return (
+      <Card
+        className="stats-card cursor-pointer"
+        onClick={() => setIsOpen(true)}
+      >
+        <CardContent className="p-6 text-center">
+          <div className="flex items-center justify-center gap-3">
+            <div className="p-3 rounded-full bg-success-light">
+              <Plus className="h-6 w-6 text-success" />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-foreground">
+                Add Income
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Track earnings from any source
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="stats-card">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>Add Income</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOpen(false)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => handleInputChange("date", e.target.value)}
+              className="form-input"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="source">Income Source</Label>
+            <Select
+              value={formData.sourceName}
+              onValueChange={(value) => handleInputChange("sourceName", value)}
+            >
+              <SelectTrigger className="form-input">
+                <SelectValue placeholder="Select or type a source" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_SOURCES.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.sourceName === "Other" && (
+            <div>
+              <Label htmlFor="customSource">Custom Source Name</Label>
+              <Input
+                id="customSource"
+                type="text"
+                placeholder="e.g., Tutoring, Etsy sales"
+                value={formData.customSource}
+                onChange={(e) =>
+                  handleInputChange("customSource", e.target.value)
+                }
+                className="form-input"
+                required
+              />
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="incomeType">Income Type</Label>
+            <Select
+              value={formData.incomeType}
+              onValueChange={(value) => handleInputChange("incomeType", value)}
+            >
+              <SelectTrigger className="form-input">
+                <SelectValue placeholder="Select income type" />
+              </SelectTrigger>
+              <SelectContent>
+                {INCOME_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              This helps estimate tax to set aside
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="amount">Amount ($)</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={formData.amount}
+              onChange={(e) => handleInputChange("amount", e.target.value)}
+              className="form-input text-lg"
+              required
+            />
+          </div>
+
+          <Button type="submit" className="btn-income w-full">
+            Add Income
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

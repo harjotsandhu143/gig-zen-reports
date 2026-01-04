@@ -53,12 +53,24 @@ export default function TablePage() {
     });
   };
 
+  // Helper to get source display name
+  const getSourceName = (income: typeof incomes[0]) => {
+    if (income.sourceName) return income.sourceName;
+    if (income.doordash > 0) return 'DoorDash';
+    if (income.ubereats > 0) return 'Uber Eats';
+    if (income.didi > 0) return 'DiDi';
+    if (income.coles > 0) return 'Coles';
+    if (income.tips > 0) return 'Other';
+    return 'Multiple';
+  };
+
   // Combine and sort all transactions by date
   const allTransactions = [
     ...incomes.map(income => ({
       ...income,
       type: 'income' as const,
-      total: income.doordash + income.ubereats + income.didi + income.coles
+      total: income.doordash + income.ubereats + income.didi + income.coles + income.tips,
+      sourceName: getSourceName(income)
     })),
     ...expenses.map(expense => ({
       ...expense,
@@ -98,12 +110,8 @@ export default function TablePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>DoorDash</TableHead>
-                    <TableHead>Uber Eats</TableHead>
-                    <TableHead>DiDi</TableHead>
-                    <TableHead>Coles</TableHead>
-                    <TableHead>Tips</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -111,11 +119,7 @@ export default function TablePage() {
                   {incomes.map((income) => (
                     <TableRow key={income.id}>
                       <TableCell className="font-medium">{formatAustraliaDate(income.date)}</TableCell>
-                      <TableCell>${income.doordash.toFixed(2)}</TableCell>
-                      <TableCell>${income.ubereats.toFixed(2)}</TableCell>
-                      <TableCell>${income.didi.toFixed(2)}</TableCell>
-                      <TableCell>${income.coles.toFixed(2)}</TableCell>
-                      <TableCell>${income.tips.toFixed(2)}</TableCell>
+                      <TableCell>{getSourceName(income)}</TableCell>
                       <TableCell className="text-right font-bold text-success">
                         ${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}
                       </TableCell>
@@ -217,7 +221,7 @@ export default function TablePage() {
                       </TableCell>
                       <TableCell>
                         {transaction.type === 'income' 
-                          ? 'Daily Income' 
+                          ? (transaction as any).sourceName || 'Income'
                           : (transaction as any).name
                         }
                       </TableCell>
