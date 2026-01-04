@@ -57,6 +57,8 @@ export type Database = {
           didi: number | null
           doordash: number | null
           id: string
+          income_type: string | null
+          source_name: string | null
           tips: number | null
           ubereats: number | null
           updated_at: string
@@ -71,6 +73,8 @@ export type Database = {
           didi?: number | null
           doordash?: number | null
           id?: string
+          income_type?: string | null
+          source_name?: string | null
           tips?: number | null
           ubereats?: number | null
           updated_at?: string
@@ -85,6 +89,8 @@ export type Database = {
           didi?: number | null
           doordash?: number | null
           id?: string
+          income_type?: string | null
+          source_name?: string | null
           tips?: number | null
           ubereats?: number | null
           updated_at?: string
@@ -119,6 +125,7 @@ export type Database = {
       user_settings: {
         Row: {
           created_at: string
+          has_completed_onboarding: boolean | null
           id: string
           tax_rate: number | null
           updated_at: string
@@ -127,6 +134,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          has_completed_onboarding?: boolean | null
           id?: string
           tax_rate?: number | null
           updated_at?: string
@@ -135,6 +143,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          has_completed_onboarding?: boolean | null
           id?: string
           tax_rate?: number | null
           updated_at?: string

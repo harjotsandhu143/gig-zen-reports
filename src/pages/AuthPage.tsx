@@ -64,10 +64,10 @@ export default function AuthPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Income Tracker
+            Gig Zen
           </CardTitle>
           <CardDescription>
-            {isLogin ? 'Sign in to access your earnings data' : 'Create an account to start tracking'}
+            {isLogin ? 'Sign in to track your income & expenses' : 'Create an account to get started'}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,4 +1,4 @@
-import { FileDown, Undo2, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
+import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, PiggyBank, Receipt } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,18 +7,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useData } from "@/contexts/DataContext";
 import { Navigation } from "./Navigation";
-import { IncomeForm } from "./IncomeForm";
+import { UniversalIncomeForm } from "./UniversalIncomeForm";
+import { ExpenseForm } from "./ExpenseForm";
+import { Onboarding } from "./Onboarding";
 
 import { generateFinancialReport } from "@/utils/pdfGenerator";
 import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from "@/utils/timezone";
 import { calculateWeeklyTax } from "@/utils/taxCalculator";
+import { estimateTaxToSetAside } from "@/utils/atoTaxCalculator";
 import { useState, useEffect } from "react";
 import { addWeeks, format } from "date-fns";
 
 export function Dashboard() {
-  const { incomes, expenses, taxRate, weeklyTarget, setWeeklyTarget, loading, canUndo, undo, addIncome } = useData();
+  const { 
+    incomes, 
+    expenses, 
+    taxRate, 
+    weeklyTarget, 
+    setWeeklyTarget, 
+    loading, 
+    addUniversalIncome,
+    addExpense,
+    hasCompletedOnboarding,
+    completeOnboarding
+  } = useData();
   const [targetInput, setTargetInput] = useState(weeklyTarget.toString());
-  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
 
   useEffect(() => {
     setTargetInput(weeklyTarget.toString());
@@ -40,6 +54,11 @@ export function Dashboard() {
     );
   }
 
+  // Show onboarding for new users
+  if (!hasCompletedOnboarding) {
+    return <Onboarding onComplete={completeOnboarding} />;
+  }
+
   // Calculate totals by income source
   const doordashIncome = incomes.reduce((sum, income) => sum + income.doordash, 0);
   const ubereatsIncome = incomes.reduce((sum, income) => sum + income.ubereats, 0);
@@ -53,20 +72,28 @@ export function Dashboard() {
   const colesNetIncome = colesGrossIncome - totalColesTax;
   const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
   
+  // Total gross income (before any tax)
+  const totalGrossIncome = colesGrossIncome + gigIncome;
+  
   // Total income = Coles (Net after tax) + Gig income (Gross)
   const totalIncome = colesNetIncome + gigIncome;
   
-  // Debug logging
-  console.log('Coles Gross:', colesGrossIncome);
-  console.log('Coles Tax:', totalColesTax);
-  console.log('Coles Net:', colesNetIncome);
-  console.log('Gig Income:', gigIncome);
-  console.log('Total Income:', totalIncome);
+  // Calculate total expenses
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  
+  // Calculate estimated tax to set aside for gig/self-employed income
+  const estimatedTax = incomes.reduce((sum, income) => {
+    const gigTotal = income.doordash + income.ubereats + income.didi + income.tips;
+    return sum + estimateTaxToSetAside(gigTotal, income.incomeType || 'gig', taxRate);
+  }, 0);
+  
+  // Usable money = Total Income - Expenses - Estimated Tax (gig only, Coles tax already deducted)
+  const usableMoney = totalIncome - totalExpenses - estimatedTax;
   
   // Calculate remaining to meet target
-  const remaining = weeklyTarget - totalIncome;
+  const remaining = weeklyTarget - usableMoney;
   
-  // Calculate today's earnings by source
+  // Calculate today's earnings
   const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
   const todaysIncomes = incomes.filter(income => formatAustraliaDate(income.date, 'yyyy-MM-dd') === today);
   
@@ -94,12 +121,10 @@ export function Dashboard() {
   
   // Check if there's any Coles income in any week
   const hasAnyColes = incomes.some(income => income.coles > 0);
-  
 
   const handleExportPDF = () => {
     generateFinancialReport(incomes, expenses, taxRate);
   };
-
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6 pb-24">
@@ -107,9 +132,9 @@ export function Dashboard() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-success bg-clip-text text-transparent mb-1">
-              Income Tracker
+              Gig Zen
             </h1>
-            <p className="text-muted-foreground text-sm md:text-base">Track your gig income and expenses</p>
+            <p className="text-muted-foreground text-sm md:text-base">Your income & expense companion</p>
           </div>
           <Button 
             onClick={handleExportPDF} 
@@ -124,6 +149,77 @@ export function Dashboard() {
 
       <Navigation />
 
+      {/* Top Summary Cards - Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Usable Money */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-success/10">
+                <Wallet className="h-5 w-5 text-success" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Usable Money</p>
+                <p className="text-xl md:text-2xl font-bold text-success">
+                  ${usableMoney.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Expenses */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-warning/10" style={{ animationDelay: '0.1s' }}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-warning/10">
+                <Receipt className="h-5 w-5 text-warning" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Expenses</p>
+                <p className="text-xl md:text-2xl font-bold text-warning">
+                  ${totalExpenses.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tax to Set Aside */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0.2s' }}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <PiggyBank className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Set Aside for Tax</p>
+                <p className="text-xl md:text-2xl font-bold text-primary">
+                  ${(estimatedTax + totalColesTax).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today's Earnings */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10" style={{ animationDelay: '0.3s' }}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-success/10">
+                <TrendingUp className="h-5 w-5 text-success" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Today</p>
+                <p className="text-xl md:text-2xl font-bold text-success">
+                  ${todaysIncome.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Weekly Coles Tax Summary */}
       {hasAnyColes && (
         <Card className="mb-8 border border-primary/20 bg-gradient-to-br from-card to-primary/5 shadow-lg animate-slide-up">
@@ -133,7 +229,7 @@ export function Dashboard() {
                 <div className="p-2 rounded-xl bg-primary/10">
                   <Wallet className="h-5 w-5 text-primary" />
                 </div>
-                <span>Coles Weekly Tax Summary</span>
+                <span>Coles Weekly Summary</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -190,7 +286,7 @@ export function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
         {/* Weekly Target Input Card */}
-        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0s' }}>
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10">
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl transition-colors bg-primary/10 group-hover:bg-primary/20">
@@ -213,7 +309,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Today's Earnings Card */}
+        {/* Total Income Card */}
         <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
@@ -221,12 +317,12 @@ export function Dashboard() {
                 <TrendingUp className="h-6 w-6 text-success" />
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Today's Earnings</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Income</p>
                 <p className="text-3xl font-bold mt-1 text-success">
-                  ${todaysIncome.toFixed(2)}
+                  ${totalGrossIncome.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formatAustraliaDate(new Date(), 'EEEE, MMM d')}
+                  Before tax & expenses
                 </p>
               </div>
             </div>
@@ -242,8 +338,8 @@ export function Dashboard() {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Earned', value: Math.min(totalIncome, weeklyTarget || 1) },
-                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalIncome) }
+                        { name: 'Earned', value: Math.min(usableMoney, weeklyTarget || 1) },
+                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - usableMoney) }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -261,16 +357,16 @@ export function Dashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-lg font-bold text-foreground">
-                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalIncome / weeklyTarget) * 100))}%` : '0%'}
+                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((usableMoney / weeklyTarget) * 100))}%` : '0%'}
                   </span>
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Income</p>
-                <p className="text-3xl font-bold text-success mt-1">${totalIncome.toFixed(2)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Usable Money</p>
+                <p className="text-3xl font-bold text-success mt-1">${usableMoney.toFixed(2)}</p>
                 <p className="text-sm text-muted-foreground mt-2">
                   {remaining > 0 
-                    ? `$${remaining.toFixed(2)} left` 
+                    ? `$${remaining.toFixed(2)} to target` 
                     : `+$${Math.abs(remaining).toFixed(2)} over!`}
                 </p>
               </div>
@@ -279,9 +375,10 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* Income Form */}
-      <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-        <IncomeForm onIncomeAdd={addIncome} />
+      {/* Income and Expense Forms */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+        <UniversalIncomeForm onIncomeAdd={addUniversalIncome} />
+        <ExpenseForm onExpenseAdd={addExpense} />
       </div>
 
       {/* Income Breakdown Bar Chart */}
@@ -300,7 +397,8 @@ export function Dashboard() {
                   { name: 'DoorDash', weekly: doordashIncome, today: todayDoordash },
                   { name: 'Uber Eats', weekly: ubereatsIncome, today: todayUbereats },
                   { name: 'DiDi', weekly: didiIncome, today: todayDidi },
-                  { name: 'Coles (Net)', weekly: colesNetIncome, today: todayColesNet }
+                  { name: 'Coles (Net)', weekly: colesNetIncome, today: todayColesNet },
+                  { name: 'Other', weekly: tipsIncome, today: todayTips }
                 ]}
                 layout="vertical"
                 margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
@@ -322,7 +420,7 @@ export function Dashboard() {
                 <Tooltip 
                   formatter={(value: number, name: string) => [
                     `$${value.toFixed(2)}`, 
-                    name === 'weekly' ? 'Weekly' : 'Today'
+                    name === 'weekly' ? 'Total' : 'Today'
                   ]}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
@@ -337,12 +435,14 @@ export function Dashboard() {
                   <Cell fill="hsl(var(--success))" />
                   <Cell fill="hsl(var(--warning))" />
                   <Cell fill="hsl(var(--primary))" />
+                  <Cell fill="hsl(var(--muted-foreground))" />
                 </Bar>
                 <Bar dataKey="today" radius={[0, 8, 8, 0]} barSize={20} name="today">
                   <Cell fill="hsl(var(--destructive) / 0.5)" />
                   <Cell fill="hsl(var(--success) / 0.5)" />
                   <Cell fill="hsl(var(--warning) / 0.5)" />
                   <Cell fill="hsl(var(--primary) / 0.5)" />
+                  <Cell fill="hsl(var(--muted-foreground) / 0.5)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -350,7 +450,7 @@ export function Dashboard() {
           <div className="flex justify-center gap-6 mt-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-success"></div>
-              <span className="text-muted-foreground">Weekly</span>
+              <span className="text-muted-foreground">Total</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm bg-success/50"></div>
@@ -360,21 +460,10 @@ export function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Undo Button */}
-      {canUndo && (
-        <div className="mb-6 flex justify-center animate-scale-in">
-          <Button
-            onClick={undo}
-            variant="outline"
-            size="sm"
-            className="border-primary/30 text-primary hover:text-primary-foreground hover:bg-primary transition-all duration-300 hover:shadow-lg"
-          >
-            <Undo2 className="h-4 w-4 mr-2" />
-            Undo Last Action
-          </Button>
-        </div>
-      )}
-
+      {/* Disclaimer */}
+      <p className="text-xs text-center text-muted-foreground mb-4">
+        Estimate only — not financial advice.
+      </p>
     </div>
   );
 }
