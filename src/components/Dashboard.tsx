@@ -1,5 +1,6 @@
-import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, PiggyBank, Receipt } from "lucide-react";
+import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, PiggyBank, Receipt, Info } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,6 @@ export function Dashboard() {
   const { 
     incomes, 
     expenses, 
-    taxRate, 
     weeklyTarget, 
     setWeeklyTarget, 
     loading, 
@@ -81,10 +81,10 @@ export function Dashboard() {
   // Calculate total expenses
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
-  // Calculate estimated tax to set aside for gig/self-employed income
+  // Calculate estimated tax to set aside for gig/self-employed income (ATO progressive brackets)
   const estimatedTax = incomes.reduce((sum, income) => {
     const gigTotal = income.doordash + income.ubereats + income.didi + income.tips;
-    return sum + estimateTaxToSetAside(gigTotal, income.incomeType || 'gig', taxRate);
+    return sum + estimateTaxToSetAside(gigTotal, income.incomeType || 'gig');
   }, 0);
   
   // Usable money = Total Income - Expenses - Estimated Tax (gig only, Coles tax already deducted)
@@ -93,7 +93,7 @@ export function Dashboard() {
   // Calculate remaining to meet target
   const remaining = weeklyTarget - usableMoney;
   
-  // Calculate today's earnings
+  // Calculate today's earnings (GROSS - Sydney timezone)
   const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
   const todaysIncomes = incomes.filter(income => formatAustraliaDate(income.date, 'yyyy-MM-dd') === today);
   
@@ -105,7 +105,8 @@ export function Dashboard() {
   const { tax: todayColesTax } = calculateWeeklyTax(todayColesGross);
   const todayColesNet = todayColesGross - todayColesTax;
   
-  const todaysIncome = todayDoordash + todayUbereats + todayDidi + todayTips + todayColesNet;
+  // Today's earnings is GROSS (before any tax)
+  const todaysGrossIncome = todayDoordash + todayUbereats + todayDidi + todayTips + todayColesGross;
   
   // Calculate weekly Coles income with tax for selected week
   const selectedWeekDate = addWeeks(new Date(), selectedWeekOffset);
@@ -123,7 +124,7 @@ export function Dashboard() {
   const hasAnyColes = incomes.some(income => income.coles > 0);
 
   const handleExportPDF = () => {
-    generateFinancialReport(incomes, expenses, taxRate);
+    generateFinancialReport(incomes, expenses, 25);
   };
 
   return (
@@ -185,7 +186,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Tax to Set Aside (gig/self-employed only - Coles already withholds PAYG) */}
+        {/* Tax to Set Aside (ATO-based estimate for gig/self-employed) */}
         <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -193,7 +194,19 @@ export function Dashboard() {
                 <PiggyBank className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Set Aside for Tax</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Tax to Set Aside</p>
+                  <TooltipProvider>
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[250px]">
+                        <p className="text-xs">Based on ATO tax brackets (annualised from your gig income). Excludes Coles as PAYG is already withheld.</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </TooltipProvider>
+                </div>
                 <p className="text-xl md:text-2xl font-bold text-primary">
                   ${estimatedTax.toFixed(2)}
                 </p>
@@ -210,9 +223,9 @@ export function Dashboard() {
                 <TrendingUp className="h-5 w-5 text-success" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Today</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Today (Gross)</p>
                 <p className="text-xl md:text-2xl font-bold text-success">
-                  ${todaysIncome.toFixed(2)}
+                  ${todaysGrossIncome.toFixed(2)}
                 </p>
               </div>
             </div>
