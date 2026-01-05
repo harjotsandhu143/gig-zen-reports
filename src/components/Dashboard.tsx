@@ -185,7 +185,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Tax to Set Aside */}
+        {/* Tax to Set Aside (gig/self-employed only - Coles already withholds PAYG) */}
         <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -195,7 +195,7 @@ export function Dashboard() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Set Aside for Tax</p>
                 <p className="text-xl md:text-2xl font-bold text-primary">
-                  ${(estimatedTax + totalColesTax).toFixed(2)}
+                  ${estimatedTax.toFixed(2)}
                 </p>
               </div>
             </div>
