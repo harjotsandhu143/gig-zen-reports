@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Home, Settings, LogOut, RotateCcw } from 'lucide-react';
+import { BarChart3, Home, LogOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,7 @@ import {
 
 export function Navigation() {
   const location = useLocation();
-  const { taxRate, setTaxRate, resetData } = useData();
+  const { resetData } = useData();
   const { signOut } = useAuth();
 
   return (
@@ -42,14 +42,6 @@ export function Navigation() {
             <BarChart3 className="h-4 w-4" />
             Data Table
           </Link>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setTaxRate(taxRate === 20 ? 25 : taxRate === 25 ? 30 : 20)}
-        >
-          <Settings className="h-4 w-4 mr-1" />
-          Set-aside: {taxRate}%
         </Button>
         
         <AlertDialog>
