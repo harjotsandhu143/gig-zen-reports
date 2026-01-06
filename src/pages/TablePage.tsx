@@ -19,11 +19,11 @@ import { EditExpenseDialog } from '@/components/EditExpenseDialog';
 import { formatAustraliaDate, toAustraliaTime } from '@/utils/timezone';
 
 export default function TablePage() {
-  const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, updateExpense, taxRate } = useData();
+  const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, updateExpense } = useData();
   const { toast } = useToast();
 
   const handleExportPDF = () => {
-    generateFinancialReport(incomes, expenses, taxRate);
+    generateFinancialReport(incomes, expenses);
   };
 
   if (loading) {
@@ -53,7 +53,7 @@ export default function TablePage() {
     });
   };
 
-  // Helper to get source display name
+  // Helper to get source display name - shows "Unknown" if no source specified
   const getSourceName = (income: typeof incomes[0]) => {
     if (income.sourceName) return income.sourceName;
     if (income.doordash > 0) return 'DoorDash';
@@ -61,7 +61,7 @@ export default function TablePage() {
     if (income.didi > 0) return 'DiDi';
     if (income.coles > 0) return 'Coles';
     if (income.tips > 0) return 'Other';
-    return 'Multiple';
+    return 'Unknown';
   };
 
   // Combine and sort all transactions by date
