@@ -1,6 +1,5 @@
-import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, Receipt, Info } from "lucide-react";
+import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, Receipt } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
-import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -144,30 +143,25 @@ export function Dashboard() {
       <Navigation />
 
       {/* Top Summary Cards - Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-        {/* Net Balance */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {/* Total Income with Remaining Target */}
         <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-success/10">
-                <Wallet className="h-5 w-5 text-success" />
+                <TrendingUp className="h-5 w-5 text-success" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Net Balance</p>
-                  <TooltipProvider>
-                    <UITooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-[250px]">
-                        <p className="text-xs">Net balance shows income after expenses. Final tax is calculated by your tax agent or the ATO.</p>
-                      </TooltipContent>
-                    </UITooltip>
-                  </TooltipProvider>
-                </div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Total Income</p>
                 <p className="text-xl md:text-2xl font-bold text-success">
-                  ${netBalance.toFixed(2)}
+                  ${totalGrossIncome.toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {remaining > 0 
+                    ? `$${remaining.toFixed(2)} to target` 
+                    : remaining < 0 
+                      ? `+$${Math.abs(remaining).toFixed(2)} over target!` 
+                      : 'Target reached!'}
                 </p>
               </div>
             </div>
