@@ -1,4 +1,4 @@
-import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, PiggyBank, Receipt, Info } from "lucide-react";
+import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, Receipt, Info } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -15,7 +15,6 @@ import { Onboarding } from "./Onboarding";
 import { generateFinancialReport } from "@/utils/pdfGenerator";
 import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from "@/utils/timezone";
 import { calculateWeeklyTax } from "@/utils/taxCalculator";
-import { estimateTaxToSetAside } from "@/utils/atoTaxCalculator";
 import { useState, useEffect } from "react";
 import { addWeeks, format } from "date-fns";
 
@@ -81,17 +80,11 @@ export function Dashboard() {
   // Calculate total expenses
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
-  // Calculate estimated tax to set aside for gig/self-employed income (ATO progressive brackets)
-  const estimatedTax = incomes.reduce((sum, income) => {
-    const gigTotal = income.doordash + income.ubereats + income.didi + income.tips;
-    return sum + estimateTaxToSetAside(gigTotal, income.incomeType || 'gig');
-  }, 0);
-  
-  // Usable money = Total Income - Expenses - Estimated Tax (gig only, Coles tax already deducted)
-  const usableMoney = totalIncome - totalExpenses - estimatedTax;
+  // Net Balance = Total Income - Expenses (simple, no tax estimation)
+  const netBalance = totalIncome - totalExpenses;
   
   // Calculate remaining to meet target
-  const remaining = weeklyTarget - usableMoney;
+  const remaining = weeklyTarget - netBalance;
   
   // Calculate today's earnings (GROSS - Sydney timezone)
   const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
@@ -124,7 +117,7 @@ export function Dashboard() {
   const hasAnyColes = incomes.some(income => income.coles > 0);
 
   const handleExportPDF = () => {
-    generateFinancialReport(incomes, expenses, 25);
+    generateFinancialReport(incomes, expenses);
   };
 
   return (
@@ -151,8 +144,8 @@ export function Dashboard() {
       <Navigation />
 
       {/* Top Summary Cards - Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {/* Usable Money */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        {/* Net Balance */}
         <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -160,9 +153,21 @@ export function Dashboard() {
                 <Wallet className="h-5 w-5 text-success" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Usable Money</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Net Balance</p>
+                  <TooltipProvider>
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[250px]">
+                        <p className="text-xs">Net balance shows income after expenses. Final tax is calculated by your tax agent or the ATO.</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </TooltipProvider>
+                </div>
                 <p className="text-xl md:text-2xl font-bold text-success">
-                  ${usableMoney.toFixed(2)}
+                  ${netBalance.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -186,37 +191,8 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Tax to Set Aside (ATO-based estimate for gig/self-employed) */}
-        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0.2s' }}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-primary/10">
-                <PiggyBank className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Tax to Set Aside</p>
-                  <TooltipProvider>
-                    <UITooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-[250px]">
-                        <p className="text-xs">Based on ATO tax brackets (annualised from your gig income). Excludes Coles as PAYG is already withheld.</p>
-                      </TooltipContent>
-                    </UITooltip>
-                  </TooltipProvider>
-                </div>
-                <p className="text-xl md:text-2xl font-bold text-primary">
-                  ${estimatedTax.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Today's Earnings */}
-        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10" style={{ animationDelay: '0.3s' }}>
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-success/10" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-success/10">
@@ -351,8 +327,8 @@ export function Dashboard() {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Earned', value: Math.min(usableMoney, weeklyTarget || 1) },
-                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - usableMoney) }
+                        { name: 'Earned', value: Math.min(netBalance, weeklyTarget || 1) },
+                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - netBalance) }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -370,13 +346,13 @@ export function Dashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-lg font-bold text-foreground">
-                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((usableMoney / weeklyTarget) * 100))}%` : '0%'}
+                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((netBalance / weeklyTarget) * 100))}%` : '0%'}
                   </span>
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Usable Money</p>
-                <p className="text-3xl font-bold text-success mt-1">${usableMoney.toFixed(2)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Net Balance</p>
+                <p className="text-3xl font-bold text-success mt-1">${netBalance.toFixed(2)}</p>
                 <p className="text-sm text-muted-foreground mt-2">
                   {remaining > 0 
                     ? `$${remaining.toFixed(2)} to target` 

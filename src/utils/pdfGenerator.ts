@@ -1,8 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatAustraliaDate, toAustraliaTime } from '@/utils/timezone';
-import { calculateWeeklyTax } from '@/utils/taxCalculator';
-import { estimateTaxToSetAside, formatIncomeType } from '@/utils/atoTaxCalculator';
+import { formatAustraliaDate } from '@/utils/timezone';
 
 interface Income {
   id: string;
@@ -26,8 +24,7 @@ interface Expense {
 
 export const generateFinancialReport = (
   incomes: Income[],
-  expenses: Expense[],
-  taxRate: number
+  expenses: Expense[]
 ) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -76,23 +73,12 @@ export const generateFinancialReport = (
   const totalColesHours = incomes.reduce((sum, income) => sum + (income.colesHours || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
-  // Calculate Coles tax
-  const { tax: totalColesTax } = calculateWeeklyTax(colesGrossIncome);
-  const colesNetIncome = colesGrossIncome - totalColesTax;
-  
   // Total income
   const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
   const totalGrossIncome = colesGrossIncome + gigIncome;
-  const totalNetIncome = colesNetIncome + gigIncome;
   
-  // Estimated tax for gig income
-  const estimatedGigTax = incomes.reduce((sum, income) => {
-    const gigTotal = income.doordash + income.ubereats + income.didi + income.tips;
-    return sum + estimateTaxToSetAside(gigTotal, income.incomeType || 'gig', taxRate);
-  }, 0);
-  
-  const totalTaxToSetAside = totalColesTax + estimatedGigTax;
-  const usableMoney = totalNetIncome - totalExpenses - estimatedGigTax;
+  // Net Balance = Total Income - Expenses (simple, no tax estimation)
+  const netBalance = totalGrossIncome - totalExpenses;
 
   // ============ SUMMARY SECTION ============
   doc.setFontSize(16);
@@ -100,12 +86,11 @@ export const generateFinancialReport = (
   doc.text('Summary', 20, yPosition);
   yPosition += 10;
 
-  // Summary table
+  // Summary table (simplified - no tax)
   const summaryData = [
     ['Total Income (Gross)', `$${totalGrossIncome.toFixed(2)}`],
     ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
-    ['Estimated Tax to Set Aside', `$${totalTaxToSetAside.toFixed(2)}`],
-    ['Usable Money', `$${usableMoney.toFixed(2)}`],
+    ['Net Balance', `$${netBalance.toFixed(2)}`],
   ];
 
   autoTable(doc, {
@@ -123,8 +108,8 @@ export const generateFinancialReport = (
     alternateRowStyles: { fillColor: [248, 250, 252] },
     margin: { left: 20, right: 20 },
     didParseCell: function(data) {
-      // Highlight usable money row
-      if (data.row.index === 3) {
+      // Highlight net balance row
+      if (data.row.index === 2) {
         data.cell.styles.textColor = successColor;
         data.cell.styles.fontStyle = 'bold';
       }
@@ -145,13 +130,11 @@ export const generateFinancialReport = (
   if (didiIncome > 0) incomeBreakdownData.push(['DiDi', `$${didiIncome.toFixed(2)}`]);
   if (tipsIncome > 0) incomeBreakdownData.push(['Other Income', `$${tipsIncome.toFixed(2)}`]);
   if (colesGrossIncome > 0) {
-    incomeBreakdownData.push(['Coles (Gross)', `$${colesGrossIncome.toFixed(2)}`]);
+    incomeBreakdownData.push(['Coles', `$${colesGrossIncome.toFixed(2)}`]);
     if (totalColesHours > 0) incomeBreakdownData.push(['Coles Hours Worked', `${totalColesHours.toFixed(1)} hrs`]);
-    incomeBreakdownData.push(['Coles Tax Withheld', `-$${totalColesTax.toFixed(2)}`]);
-    incomeBreakdownData.push(['Coles (Net)', `$${colesNetIncome.toFixed(2)}`]);
   }
   incomeBreakdownData.push(['', '']);
-  incomeBreakdownData.push(['Total Income', `$${totalNetIncome.toFixed(2)}`]);
+  incomeBreakdownData.push(['Total Income', `$${totalGrossIncome.toFixed(2)}`]);
 
   autoTable(doc, {
     body: incomeBreakdownData,
@@ -174,45 +157,12 @@ export const generateFinancialReport = (
     }
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 20;
-
-  // ============ TAX BREAKDOWN SECTION ============
-  doc.setFontSize(16);
-  doc.setTextColor(...textColor);
-  doc.text('Tax to Set Aside', 20, yPosition);
-  yPosition += 10;
-
-  const taxBreakdownData: string[][] = [];
-  if (totalColesTax > 0) taxBreakdownData.push(['Coles Tax (withheld by employer)', `$${totalColesTax.toFixed(2)}`]);
-  if (estimatedGigTax > 0) taxBreakdownData.push([`Gig/Self-employed Tax (est. ${taxRate}%)`, `$${estimatedGigTax.toFixed(2)}`]);
-  taxBreakdownData.push(['Total Tax to Set Aside', `$${totalTaxToSetAside.toFixed(2)}`]);
-
-  autoTable(doc, {
-    body: taxBreakdownData,
-    startY: yPosition,
-    theme: 'plain',
-    styles: { 
-      fontSize: 11,
-      cellPadding: { top: 5, right: 12, bottom: 5, left: 12 },
-    },
-    columnStyles: {
-      0: { textColor: mutedColor, cellWidth: 130 },
-      1: { textColor: warningColor, halign: 'right' },
-    },
-    margin: { left: 20, right: 20 },
-    didParseCell: function(data) {
-      if (data.row.index === taxBreakdownData.length - 1) {
-        data.cell.styles.fontStyle = 'bold';
-      }
-    }
-  });
-
   yPosition = (doc as any).lastAutoTable.finalY + 15;
 
   // Disclaimer
   doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
-  doc.text('Estimate only — not financial advice.', 20, yPosition);
+  doc.text('Net balance shows income after expenses. Final tax is calculated by your tax agent or the ATO.', 20, yPosition);
 
   // ============ PAGE 2+: DETAILED TABLES ============
   
@@ -228,7 +178,7 @@ export const generateFinancialReport = (
 
     const incomeData = incomes.map(income => {
       const total = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
-      // Determine source name
+      // Determine source name - show "Unknown" if no source specified
       let source = '';
       if (income.sourceName) {
         source = income.sourceName;
@@ -243,22 +193,21 @@ export const generateFinancialReport = (
       } else if (income.tips > 0) {
         source = 'Other';
       } else {
-        source = 'Multiple';
+        source = 'Unknown';
       }
       
       return [
         formatAustraliaDate(income.date, 'MMM dd, yyyy'),
         source,
-        formatIncomeType(income.incomeType || 'gig'),
         `$${total.toFixed(2)}`
       ];
     });
 
     // Add totals row
-    incomeData.push(['', '', 'Total', `$${totalGrossIncome.toFixed(2)}`]);
+    incomeData.push(['', 'Total', `$${totalGrossIncome.toFixed(2)}`]);
 
     autoTable(doc, {
-      head: [['Date', 'Source', 'Type', 'Amount']],
+      head: [['Date', 'Source', 'Amount']],
       body: incomeData,
       startY: yPosition,
       theme: 'striped',
@@ -274,10 +223,9 @@ export const generateFinancialReport = (
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
-        0: { cellWidth: 45 },
-        1: { cellWidth: 50 },
-        2: { cellWidth: 45 },
-        3: { halign: 'right', cellWidth: 35 }
+        0: { cellWidth: 50 },
+        1: { cellWidth: 80 },
+        2: { halign: 'right', cellWidth: 45 }
       },
       margin: { left: 20, right: 20 },
       didParseCell: function(data) {
