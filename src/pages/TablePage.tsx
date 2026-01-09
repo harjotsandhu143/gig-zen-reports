@@ -64,29 +64,10 @@ export default function TablePage() {
     return 'Unknown';
   };
 
-  // Group incomes by date for daily summary
-  const dailySummary = incomes.reduce((acc, income) => {
-    const dateKey = income.date;
-    if (!acc[dateKey]) {
-      acc[dateKey] = {
-        date: dateKey,
-        sources: {} as Record<string, number>,
-        total: 0
-      };
-    }
-    
-    const source = getSourceName(income);
-    const amount = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
-    
-    acc[dateKey].sources[source] = (acc[dateKey].sources[source] || 0) + amount;
-    acc[dateKey].total += amount;
-    
-    return acc;
-  }, {} as Record<string, { date: string; sources: Record<string, number>; total: number }>);
-
-  // Sort by date descending
-  const sortedDailySummary = Object.values(dailySummary)
-    .sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime());
+  // Sort incomes by date descending
+  const sortedIncomes = [...incomes].sort((a, b) => 
+    toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()
+  );
 
   // Combine and sort all transactions by date
   const allTransactions = [
@@ -121,33 +102,52 @@ export default function TablePage() {
       <Navigation />
 
       <div className="space-y-6">
-        {/* Income Daily Summary Table */}
+        {/* Income Table */}
         <Card className="stats-card">
           <CardHeader>
-            <CardTitle className="text-success">Income Records (Daily Summary)</CardTitle>
+            <CardTitle className="text-success">Income Records</CardTitle>
           </CardHeader>
           <CardContent>
-            {sortedDailySummary.length === 0 ? (
+            {sortedIncomes.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">No income records yet</p>
             ) : (
-              <div className="space-y-4">
-                {sortedDailySummary.map((day) => (
-                  <div key={day.date} className="border rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-2 pb-2 border-b">
-                      <span className="font-semibold text-foreground">{formatAustraliaDate(day.date)}</span>
-                      <span className="font-bold text-success">Total: ${day.total.toFixed(2)}</span>
-                    </div>
-                    <div className="space-y-1">
-                      {Object.entries(day.sources).map(([source, amount]) => (
-                        <div key={source} className="flex justify-between items-center text-sm">
-                          <span className="text-muted-foreground">{source}</span>
-                          <span className="font-medium text-success">${amount.toFixed(2)}</span>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedIncomes.map((income) => (
+                    <TableRow key={income.id}>
+                      <TableCell className="font-medium">{formatAustraliaDate(income.date)}</TableCell>
+                      <TableCell>{getSourceName(income)}</TableCell>
+                      <TableCell className="text-right font-bold text-success">
+                        ${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-1 justify-end">
+                          <EditIncomeDialog 
+                            income={income} 
+                            onUpdate={updateIncome}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteIncome(income.id, income.date)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
