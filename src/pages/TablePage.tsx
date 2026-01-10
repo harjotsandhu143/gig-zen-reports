@@ -115,37 +115,44 @@ export default function TablePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">DoorDash</TableHead>
+                    <TableHead className="text-right">Uber Eats</TableHead>
+                    <TableHead className="text-right">DiDi</TableHead>
+                    <TableHead className="text-right">Coles</TableHead>
+                    <TableHead className="text-right">Tips/Other</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedIncomes.map((income) => (
-                    <TableRow key={income.id}>
-                      <TableCell className="font-medium">{formatAustraliaDate(income.date)}</TableCell>
-                      <TableCell>{getSourceName(income)}</TableCell>
-                      <TableCell className="text-right font-bold text-success">
-                        ${(income.doordash + income.ubereats + income.didi + income.coles + income.tips).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          <EditIncomeDialog 
-                            income={income} 
-                            onUpdate={updateIncome}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteIncome(income.id, income.date)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {sortedIncomes.map((income) => {
+                    const total = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
+
+                    return (
+                      <TableRow key={income.id}>
+                        <TableCell className="font-medium">{formatAustraliaDate(income.date)}</TableCell>
+                        <TableCell className="text-right">${income.doordash.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${income.ubereats.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${income.didi.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${income.coles.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${income.tips.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-bold text-success">${total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <EditIncomeDialog income={income} onUpdate={updateIncome} />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteIncome(income.id, income.date)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
