@@ -70,10 +70,11 @@ export function Dashboard() {
   const colesNetIncome = colesGrossIncome - totalColesTax;
   const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
   
-  // Total gross income (before any tax)
+  // Total gross income (before any tax) - for reference only
   const totalGrossIncome = colesGrossIncome + gigIncome;
   
   // Total income = Coles (Net after tax) + Gig income (Gross)
+  // This is the actual money you receive
   const totalIncome = colesNetIncome + gigIncome;
   
   // Calculate total expenses
@@ -82,8 +83,8 @@ export function Dashboard() {
   // Net Balance = Total Income - Expenses (simple, no tax estimation)
   const netBalance = totalIncome - totalExpenses;
   
-  // Calculate remaining to meet target (based on total gross income)
-  const remaining = weeklyTarget - totalGrossIncome;
+  // Calculate remaining to meet target (based on total income with Coles NET)
+  const remaining = weeklyTarget - totalIncome;
   
   // Calculate today's earnings (GROSS - Sydney timezone)
   const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
@@ -154,7 +155,7 @@ export function Dashboard() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Total Income</p>
                 <p className="text-xl md:text-2xl font-bold text-success">
-                  ${totalGrossIncome.toFixed(2)}
+                  ${totalIncome.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {remaining > 0 
@@ -302,10 +303,10 @@ export function Dashboard() {
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Income</p>
                 <p className="text-3xl font-bold mt-1 text-success">
-                  ${totalGrossIncome.toFixed(2)}
+                  ${totalIncome.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Before tax & expenses
+                  Coles Net + Gig Gross
                 </p>
               </div>
             </div>
@@ -321,8 +322,8 @@ export function Dashboard() {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Earned', value: Math.min(totalGrossIncome, weeklyTarget || 1) },
-                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalGrossIncome) }
+                        { name: 'Earned', value: Math.min(totalIncome, weeklyTarget || 1) },
+                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalIncome) }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -340,7 +341,7 @@ export function Dashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-lg font-bold text-foreground">
-                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalGrossIncome / weeklyTarget) * 100))}%` : '0%'}
+                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalIncome / weeklyTarget) * 100))}%` : '0%'}
                   </span>
                 </div>
               </div>
