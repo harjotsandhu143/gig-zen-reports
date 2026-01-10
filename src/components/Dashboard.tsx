@@ -82,8 +82,8 @@ export function Dashboard() {
   // Net Balance = Total Income - Expenses (simple, no tax estimation)
   const netBalance = totalIncome - totalExpenses;
   
-  // Calculate remaining to meet target
-  const remaining = weeklyTarget - netBalance;
+  // Calculate remaining to meet target (based on total gross income)
+  const remaining = weeklyTarget - totalGrossIncome;
   
   // Calculate today's earnings (GROSS - Sydney timezone)
   const today = formatAustraliaDate(new Date(), 'yyyy-MM-dd');
@@ -321,8 +321,8 @@ export function Dashboard() {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Earned', value: Math.min(netBalance, weeklyTarget || 1) },
-                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - netBalance) }
+                        { name: 'Earned', value: Math.min(totalGrossIncome, weeklyTarget || 1) },
+                        { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalGrossIncome) }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -340,18 +340,14 @@ export function Dashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-lg font-bold text-foreground">
-                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((netBalance / weeklyTarget) * 100))}%` : '0%'}
+                    {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalGrossIncome / weeklyTarget) * 100))}%` : '0%'}
                   </span>
                 </div>
               </div>
               <div className="flex-1">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Net Balance</p>
                 <p className="text-3xl font-bold text-success mt-1">${netBalance.toFixed(2)}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {remaining > 0 
-                    ? `$${remaining.toFixed(2)} to target` 
-                    : `+$${Math.abs(remaining).toFixed(2)} over!`}
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">Income - Expenses</p>
               </div>
             </div>
           </CardContent>
