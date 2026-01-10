@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatAustraliaDate } from '@/utils/timezone';
+import { calculateWeeklyTax } from '@/utils/taxCalculator';
 
 interface Income {
   id: string;
@@ -73,12 +74,16 @@ export const generateFinancialReport = (
   const totalColesHours = incomes.reduce((sum, income) => sum + (income.colesHours || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
-  // Total income
-  const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
-  const totalGrossIncome = colesGrossIncome + gigIncome;
+  // Calculate Coles tax
+  const { tax: colesTax } = calculateWeeklyTax(colesGrossIncome);
+  const colesNetIncome = colesGrossIncome - colesTax;
   
-  // Net Balance = Total Income - Expenses (simple, no tax estimation)
-  const netBalance = totalGrossIncome - totalExpenses;
+  // Total income = Coles Net + Gig income (matching dashboard logic)
+  const gigIncome = doordashIncome + ubereatsIncome + didiIncome + tipsIncome;
+  const totalIncome = colesNetIncome + gigIncome;
+  
+  // Net Balance = Total Income - Expenses
+  const netBalance = totalIncome - totalExpenses;
 
   // ============ SUMMARY SECTION ============
   doc.setFontSize(16);
@@ -86,9 +91,9 @@ export const generateFinancialReport = (
   doc.text('Summary', 20, yPosition);
   yPosition += 10;
 
-  // Summary table (simplified - no tax)
+  // Summary table
   const summaryData = [
-    ['Total Income (Gross)', `$${totalGrossIncome.toFixed(2)}`],
+    ['Total Income', `$${totalIncome.toFixed(2)}`],
     ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
     ['Net Balance', `$${netBalance.toFixed(2)}`],
   ];
@@ -130,11 +135,13 @@ export const generateFinancialReport = (
   if (didiIncome > 0) incomeBreakdownData.push(['DiDi', `$${didiIncome.toFixed(2)}`]);
   if (tipsIncome > 0) incomeBreakdownData.push(['Other Income', `$${tipsIncome.toFixed(2)}`]);
   if (colesGrossIncome > 0) {
-    incomeBreakdownData.push(['Coles', `$${colesGrossIncome.toFixed(2)}`]);
+    incomeBreakdownData.push(['Coles (Gross)', `$${colesGrossIncome.toFixed(2)}`]);
+    incomeBreakdownData.push(['Coles Tax Withheld', `-$${colesTax.toFixed(2)}`]);
+    incomeBreakdownData.push(['Coles (Net)', `$${colesNetIncome.toFixed(2)}`]);
     if (totalColesHours > 0) incomeBreakdownData.push(['Coles Hours Worked', `${totalColesHours.toFixed(1)} hrs`]);
   }
   incomeBreakdownData.push(['', '']);
-  incomeBreakdownData.push(['Total Income', `$${totalGrossIncome.toFixed(2)}`]);
+  incomeBreakdownData.push(['Total Income', `$${totalIncome.toFixed(2)}`]);
 
   autoTable(doc, {
     body: incomeBreakdownData,
@@ -154,6 +161,10 @@ export const generateFinancialReport = (
         data.cell.styles.fontStyle = 'bold';
         data.cell.styles.textColor = successColor;
       }
+      // Style tax row in warning color
+      if (data.row.raw && (data.row.raw as string[])[0] === 'Coles Tax Withheld') {
+        data.cell.styles.textColor = warningColor;
+      }
     }
   });
 
@@ -162,11 +173,11 @@ export const generateFinancialReport = (
   // Disclaimer
   doc.setFontSize(9);
   doc.setTextColor(...mutedColor);
-  doc.text('Net balance shows income after expenses. Final tax is calculated by your tax agent or the ATO.', 20, yPosition);
+  doc.text('Total Income = Coles Net + Gig Gross. Final tax is calculated by your tax agent or the ATO.', 20, yPosition);
 
   // ============ PAGE 2+: DETAILED TABLES ============
   
-  // Income Details
+  // Income Details - matching the data table format
   if (incomes.length > 0) {
     doc.addPage();
     yPosition = 25;
@@ -176,38 +187,46 @@ export const generateFinancialReport = (
     doc.text('Income Details', 20, yPosition);
     yPosition += 10;
 
-    const incomeData = incomes.map(income => {
+    // Sort incomes by date descending (like the table)
+    const sortedIncomesDesc = [...incomes].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    // Build income data with source columns like the data table
+    const incomeData = sortedIncomesDesc.map(income => {
       const total = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
-      // Determine source name - show "Unknown" if no source specified
-      let source = '';
-      if (income.sourceName) {
-        source = income.sourceName;
-      } else if (income.doordash > 0) {
-        source = 'DoorDash';
-      } else if (income.ubereats > 0) {
-        source = 'Uber Eats';
-      } else if (income.didi > 0) {
-        source = 'DiDi';
-      } else if (income.coles > 0) {
-        source = 'Coles';
-      } else if (income.tips > 0) {
-        source = 'Other';
-      } else {
-        source = 'Unknown';
-      }
-      
       return [
-        formatAustraliaDate(income.date, 'MMM dd, yyyy'),
-        source,
+        formatAustraliaDate(income.date, 'MMM dd'),
+        `$${income.doordash.toFixed(2)}`,
+        `$${income.ubereats.toFixed(2)}`,
+        `$${income.didi.toFixed(2)}`,
+        `$${income.coles.toFixed(2)}`,
+        `$${income.tips.toFixed(2)}`,
         `$${total.toFixed(2)}`
       ];
     });
 
+    // Calculate column totals
+    const totalDoordash = incomes.reduce((sum, i) => sum + i.doordash, 0);
+    const totalUbereats = incomes.reduce((sum, i) => sum + i.ubereats, 0);
+    const totalDidi = incomes.reduce((sum, i) => sum + i.didi, 0);
+    const totalColes = incomes.reduce((sum, i) => sum + i.coles, 0);
+    const totalTips = incomes.reduce((sum, i) => sum + i.tips, 0);
+    const grandTotal = totalDoordash + totalUbereats + totalDidi + totalColes + totalTips;
+
     // Add totals row
-    incomeData.push(['', 'Total', `$${totalGrossIncome.toFixed(2)}`]);
+    incomeData.push([
+      'Total',
+      `$${totalDoordash.toFixed(2)}`,
+      `$${totalUbereats.toFixed(2)}`,
+      `$${totalDidi.toFixed(2)}`,
+      `$${totalColes.toFixed(2)}`,
+      `$${totalTips.toFixed(2)}`,
+      `$${grandTotal.toFixed(2)}`
+    ]);
 
     autoTable(doc, {
-      head: [['Date', 'Source', 'Amount']],
+      head: [['Date', 'DoorDash', 'Uber Eats', 'DiDi', 'Coles', 'Tips/Other', 'Total']],
       body: incomeData,
       startY: yPosition,
       theme: 'striped',
@@ -215,19 +234,24 @@ export const generateFinancialReport = (
         fillColor: successColor, 
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        cellPadding: 6
+        cellPadding: 4,
+        fontSize: 9
       },
       bodyStyles: { 
-        cellPadding: 5,
-        fontSize: 10
+        cellPadding: 3,
+        fontSize: 9
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
-        0: { cellWidth: 50 },
-        1: { cellWidth: 80 },
-        2: { halign: 'right', cellWidth: 45 }
+        0: { cellWidth: 28 },
+        1: { halign: 'right', cellWidth: 25 },
+        2: { halign: 'right', cellWidth: 25 },
+        3: { halign: 'right', cellWidth: 22 },
+        4: { halign: 'right', cellWidth: 22 },
+        5: { halign: 'right', cellWidth: 28 },
+        6: { halign: 'right', cellWidth: 25, fontStyle: 'bold' }
       },
-      margin: { left: 20, right: 20 },
+      margin: { left: 15, right: 15 },
       didParseCell: function(data) {
         // Style totals row
         if (data.row.index === incomeData.length - 1 && data.section === 'body') {
