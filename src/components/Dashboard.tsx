@@ -306,7 +306,11 @@ export function Dashboard() {
                   ${totalIncome.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Coles Net + Gig Gross
+                  {remaining > 0 
+                    ? <span className="text-warning font-medium">${remaining.toFixed(2)} left to target</span>
+                    : remaining < 0 
+                      ? <span className="text-success font-medium">+${Math.abs(remaining).toFixed(2)} over target!</span>
+                      : <span className="text-success font-medium">Target reached!</span>}
                 </p>
               </div>
             </div>
