@@ -1,4 +1,4 @@
-import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, Receipt } from "lucide-react";
+import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, Receipt, DollarSign } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -268,7 +268,7 @@ export function Dashboard() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         {/* Weekly Target Input Card */}
         <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10">
           <CardContent className="p-5">
@@ -317,8 +317,28 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Gig Income Card */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-accent/10" style={{ animationDelay: '0.15s' }}>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl transition-colors bg-accent/10 group-hover:bg-accent/20">
+                <DollarSign className="h-6 w-6 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Gig Income</p>
+                <p className="text-3xl font-bold mt-1 text-accent-foreground">
+                  ${gigIncome.toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  DoorDash + Uber + DiDi + Tips
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Weekly Target Progress Pie Chart */}
-        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-success/5 animate-fade-in md:col-span-2 lg:col-span-1" style={{ animationDelay: '0.2s' }}>
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-success/5 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-5">
             <div className="flex items-center gap-5">
               <div className="relative w-28 h-28">
