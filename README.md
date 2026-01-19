@@ -1,73 +1,166 @@
-# Welcome to your Lovable project
+# Gig Zen Reports
 
-## Project info
+A comprehensive financial reporting and tax calculation tool for gig economy workers and independent contractors. Simplify tax filing, track earnings across multiple platforms, and generate detailed financial reports with ease.
 
-**URL**: https://lovable.dev/projects/7cd5dad5-1196-467a-a188-b85f3aa78078
+## Overview
 
-## How can I edit this code?
+Gig Zen Reports is designed to help gig workers (delivery drivers, ride-share drivers, freelancers, etc.) manage their finances efficiently. The application automatically calculates tax obligations, categorizes expenses, and generates professional reports for tax filing purposes.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+✨ **Multi-Platform Support**
+- Track earnings from Uber Eats, DiDi, and other gig platforms
+- Support for multiple income streams
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7cd5dad5-1196-467a-a188-b85f3aa78078) and start prompting.
+📊 **Financial Analytics**
+- Automatic tax calculations based on Australian tax regulations
+- Expense tracking and categorization
+- Income vs. expense reports
+- Tax liability estimations
 
-Changes made via Lovable will be committed automatically to this repo.
+📄 **Report Generation**
+- Generate PDF reports for tax filing
+- Monthly and quarterly summaries
+- Exportable financial statements
 
-**Use your preferred IDE**
+🔒 **Data Management**
+- Secure data storage with Supabase
+- User authentication and authorization
+- Real-time data synchronization
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Frontend**: React with Vite for fast development and optimized builds
+- **Styling**: Tailwind CSS + shadcn-ui for beautiful, accessible UI components
+- **Language**: TypeScript for type-safe development
+- **Backend**: Supabase (PostgreSQL) for database and real-time features
+- **PDF Generation**: jsPDF for creating downloadable reports
+- **Build Tool**: Vite for lightning-fast development
 
-Follow these steps:
+## Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js (v16 or higher)
+- npm or yarn package manager
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/harjotsandhu143/gig-zen-reports.git
+   cd gig-zen-reports
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   - Create a `.env` file in the root directory
+   - Add your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_key
+   ```
+
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+The application will be available at `http://localhost:5173`
+
+## Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint to check code quality
+
+## Project Structure
+
+```
+src/
+├── components/     # Reusable React components
+├── pages/         # Page components
+├── hooks/         # Custom React hooks
+├── utils/         # Utility functions
+├── types/         # TypeScript type definitions
+├── styles/        # Global styles
+└── App.tsx        # Main application component
+
+public/           # Static assets
+supabase/         # Supabase configuration and migrations
 ```
 
-**Edit a file directly in GitHub**
+## Key Features Breakdown
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Tax Calculation Engine
+Automatically calculates tax obligations based on:
+- Australian income tax rates
+- Deductible expenses
+- Platform-specific earnings
+- Quarterly tax estimates
 
-**Use GitHub Codespaces**
+### Report Generation
+- Monthly income summaries
+- Expense breakdowns by category
+- Tax liability projections
+- Professional PDF exports
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Development
 
-## What technologies are used for this project?
+### Making Changes
 
-This project is built with:
+1. Create a new branch for your feature:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-- Vite
+2. Make your changes and commit:
+   ```bash
+   git add .
+   git commit -m "Add your feature description"
+   ```
+
+3. Push to your branch:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+## Deployment
+
+The project is ready for deployment on platforms like:
+- Vercel
+- Netlify
+- AWS Amplify
+- Traditional VPS hosting
+
+## Technologies Used
+
+- React 18+
 - TypeScript
-- React
-- shadcn-ui
+- Vite
 - Tailwind CSS
+- shadcn-ui
+- Supabase
+- jsPDF
+- Node.js
 
-## How can I deploy this project?
+## Contributing
 
-Simply open [Lovable](https://lovable.dev/projects/7cd5dad5-1196-467a-a188-b85f3aa78078) and click on Share -> Publish.
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
 
-## Can I connect a custom domain to my Lovable project?
+## License
 
-Yes, you can!
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Contact & Support
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+For support or inquiries, please reach out to the project maintainer or open an issue on GitHub.
+
+---
+
+**Made with ❤️ for gig economy workers**
