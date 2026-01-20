@@ -202,6 +202,23 @@ export function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Today's Gig Earnings */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-accent/10" style={{ animationDelay: '0.3s' }}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-accent/10">
+                <DollarSign className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Today's Gig</p>
+                <p className="text-xl md:text-2xl font-bold text-accent-foreground">
+                  ${(todayDoordash + todayUbereats + todayDidi + todayTips).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Weekly Coles Tax Summary */}
