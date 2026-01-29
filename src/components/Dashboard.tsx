@@ -169,17 +169,20 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Total Expenses */}
-        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-warning/10" style={{ animationDelay: '0.1s' }}>
+        {/* After Expenses (Net Balance) */}
+        <Card className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in bg-gradient-to-br from-card to-primary/10" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-warning/10">
-                <Receipt className="h-5 w-5 text-warning" />
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Wallet className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">Expenses</p>
-                <p className="text-xl md:text-2xl font-bold text-warning">
-                  ${totalExpenses.toFixed(2)}
+                <p className="text-xs uppercase tracking-wide text-muted-foreground truncate">After Expenses</p>
+                <p className={`text-xl md:text-2xl font-bold ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  ${netBalance.toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Expenses: ${totalExpenses.toFixed(2)}
                 </p>
               </div>
             </div>
