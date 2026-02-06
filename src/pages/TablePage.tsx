@@ -30,8 +30,8 @@ export default function TablePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your data...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -53,7 +53,6 @@ export default function TablePage() {
     });
   };
 
-  // Helper to get source display name - shows "Unknown" if no source specified
   const getSourceName = (income: typeof incomes[0]) => {
     if (income.sourceName) return income.sourceName;
     if (income.doordash > 0) return 'DoorDash';
@@ -64,12 +63,10 @@ export default function TablePage() {
     return 'Unknown';
   };
 
-  // Sort incomes by date descending
   const sortedIncomes = [...incomes].sort((a, b) => 
     toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime()
   );
 
-  // Combine and sort all transactions by date
   const allTransactions = [
     ...incomes.map(income => ({
       ...income,
@@ -85,199 +82,209 @@ export default function TablePage() {
   ].sort((a, b) => toAustraliaTime(b.date).getTime() - toAustraliaTime(a.date).getTime());
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-20">
-      <header className="mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Data Overview</h1>
-            <p className="text-muted-foreground">Complete transaction history</p>
+    <div className="min-h-screen bg-background pb-20">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
+        <header className="mb-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Data</h1>
+              <p className="text-muted-foreground text-sm mt-1">Complete transaction history</p>
+            </div>
+            <Button onClick={handleExportPDF} variant="outline" size="sm" className="rounded-full h-9 px-4 border-border/60 text-sm">
+              <FileDown className="w-3.5 h-3.5 mr-1.5" />
+              Export
+            </Button>
           </div>
-          <Button onClick={handleExportPDF} variant="secondary">
-            <FileDown className="w-4 h-4 mr-2" />
-            Export PDF
-          </Button>
-        </div>
-      </header>
+        </header>
 
-      <Navigation />
+        <Navigation />
 
-      <div className="space-y-6">
-        {/* Income Table */}
-        <Card className="stats-card">
-          <CardHeader>
-            <CardTitle className="text-success">Income Records</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {sortedIncomes.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No income records yet</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">DoorDash</TableHead>
-                    <TableHead className="text-right">Uber Eats</TableHead>
-                    <TableHead className="text-right">DiDi</TableHead>
-                    <TableHead className="text-right">Coles</TableHead>
-                    <TableHead className="text-right">Tips/Other</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedIncomes.map((income) => {
-                    const total = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
+        <div className="space-y-6">
+          {/* Income Table */}
+          <Card className="rounded-2xl border-border/50 shadow-sm overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-success">Income Records</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sortedIncomes.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8 text-sm">No income records yet</p>
+              ) : (
+                <div className="overflow-x-auto -mx-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50">
+                        <TableHead className="text-[11px] uppercase tracking-wider">Date</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">DoorDash</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Uber Eats</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">DiDi</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Coles</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Tips</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Total</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedIncomes.map((income) => {
+                        const total = income.doordash + income.ubereats + income.didi + income.coles + income.tips;
+                        return (
+                          <TableRow key={income.id} className="border-border/30">
+                            <TableCell className="font-medium text-sm">{formatAustraliaDate(income.date)}</TableCell>
+                            <TableCell className="text-right text-sm">${income.doordash.toFixed(2)}</TableCell>
+                            <TableCell className="text-right text-sm">${income.ubereats.toFixed(2)}</TableCell>
+                            <TableCell className="text-right text-sm">${income.didi.toFixed(2)}</TableCell>
+                            <TableCell className="text-right text-sm">${income.coles.toFixed(2)}</TableCell>
+                            <TableCell className="text-right text-sm">${income.tips.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-semibold text-sm text-success">${total.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex gap-1 justify-end">
+                                <EditIncomeDialog income={income} onUpdate={updateIncome} />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteIncome(income.id, income.date)}
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                    return (
-                      <TableRow key={income.id}>
-                        <TableCell className="font-medium">{formatAustraliaDate(income.date)}</TableCell>
-                        <TableCell className="text-right">${income.doordash.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${income.ubereats.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${income.didi.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${income.coles.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${income.tips.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-bold text-success">${total.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            <EditIncomeDialog income={income} onUpdate={updateIncome} />
+          {/* Expense Table */}
+          <Card className="rounded-2xl border-border/50 shadow-sm overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-warning">Expense Records</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {expenses.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8 text-sm">No expense records yet</p>
+              ) : (
+                <div className="overflow-x-auto -mx-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50">
+                        <TableHead className="text-[11px] uppercase tracking-wider">Date</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider">Description</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Amount</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.map((expense) => (
+                        <TableRow key={expense.id} className="border-border/30">
+                          <TableCell className="font-medium text-sm">{formatAustraliaDate(expense.date)}</TableCell>
+                          <TableCell className="text-sm">{expense.name}</TableCell>
+                          <TableCell className="text-right font-semibold text-sm text-warning">
+                            ${expense.amount.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteIncome(income.id, income.date)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              size="icon"
+                              onClick={() => handleDeleteExpense(expense.id, expense.name)}
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
-                          </div>
-                        </TableCell>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card className="rounded-2xl border-border/50 shadow-sm overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Transaction Timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {allTransactions.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8 text-sm">No transactions yet</p>
+              ) : (
+                <div className="overflow-x-auto -mx-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50">
+                        <TableHead className="text-[11px] uppercase tracking-wider">Date</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider">Type</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider">Description</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Amount</TableHead>
+                        <TableHead className="text-right text-[11px] uppercase tracking-wider">Actions</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Expense Table */}
-        <Card className="stats-card">
-          <CardHeader>
-            <CardTitle className="text-warning">Expense Records</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {expenses.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No expense records yet</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell className="font-medium">{formatAustraliaDate(expense.date)}</TableCell>
-                      <TableCell>{expense.name}</TableCell>
-                      <TableCell className="text-right font-bold text-warning">
-                        ${expense.amount.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteExpense(expense.id, expense.name)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Combined Timeline Table */}
-        <Card className="stats-card">
-          <CardHeader>
-            <CardTitle>Transaction Timeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {allTransactions.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No transactions yet</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allTransactions.map((transaction) => (
-                    <TableRow key={`${transaction.type}-${transaction.id}`}>
-                      <TableCell className="font-medium">{formatAustraliaDate(transaction.date)}</TableCell>
-                      <TableCell>
-                        <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>
-                          {transaction.type === 'income' ? 'Income' : 'Expense'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {transaction.type === 'income' 
-                          ? (transaction as any).sourceName || 'Income'
-                          : (transaction as any).name
-                        }
-                      </TableCell>
-                      <TableCell className={`text-right font-bold ${
-                        transaction.type === 'income' ? 'text-success' : 'text-warning'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}${transaction.total.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          {transaction.type === 'income' ? (
-                            <EditIncomeDialog 
-                              income={transaction as any} 
-                              onUpdate={updateIncome}
-                            />
-                          ) : (
-                            <EditExpenseDialog 
-                              expense={transaction as any} 
-                              onUpdate={updateExpense}
-                            />
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (transaction.type === 'income') {
-                                handleDeleteIncome(transaction.id, transaction.date);
-                              } else {
-                                handleDeleteExpense(transaction.id, (transaction as any).name);
-                              }
-                            }}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {allTransactions.map((transaction) => (
+                        <TableRow key={`${transaction.type}-${transaction.id}`} className="border-border/30">
+                          <TableCell className="font-medium text-sm">{formatAustraliaDate(transaction.date)}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={transaction.type === 'income' ? 'default' : 'destructive'}
+                              className="rounded-full text-[10px] font-medium px-2 py-0.5"
+                            >
+                              {transaction.type === 'income' ? 'Income' : 'Expense'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {transaction.type === 'income' 
+                              ? (transaction as any).sourceName || 'Income'
+                              : (transaction as any).name
+                            }
+                          </TableCell>
+                          <TableCell className={`text-right font-semibold text-sm ${
+                            transaction.type === 'income' ? 'text-success' : 'text-warning'
+                          }`}>
+                            {transaction.type === 'income' ? '+' : '-'}${transaction.total.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              {transaction.type === 'income' ? (
+                                <EditIncomeDialog 
+                                  income={transaction as any} 
+                                  onUpdate={updateIncome}
+                                />
+                              ) : (
+                                <EditExpenseDialog 
+                                  expense={transaction as any} 
+                                  onUpdate={updateExpense}
+                                />
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  if (transaction.type === 'income') {
+                                    handleDeleteIncome(transaction.id, transaction.date);
+                                  } else {
+                                    handleDeleteExpense(transaction.id, (transaction as any).name);
+                                  }
+                                }}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -24,7 +24,6 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
     amount: ''
   });
 
-  // Load form data from localStorage on mount
   useEffect(() => {
     const savedData = localStorage.getItem('expenseFormData');
     if (savedData) {
@@ -37,7 +36,6 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
     }
   }, []);
 
-  // Save form data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('expenseFormData', JSON.stringify(formData));
   }, [formData]);
@@ -56,7 +54,6 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
     };
     
     onExpenseAdd(expense);
-    // Clear localStorage after successful submission
     localStorage.removeItem('expenseFormData');
     setFormData({
       date: getAustraliaDateString(),
@@ -72,16 +69,17 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
 
   if (!isOpen) {
     return (
-      <Card className="stats-card cursor-pointer" onClick={() => setIsOpen(true)}>
-        <CardContent className="p-6 text-center">
-          <div className="flex items-center justify-center gap-3">
-            <div className="p-3 rounded-full bg-warning-light">
-              <Minus className="h-6 w-6 text-warning" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-foreground">Add Expense</p>
-              <p className="text-sm text-muted-foreground">Track business expenses</p>
-            </div>
+      <Card
+        className="rounded-2xl border-border/50 shadow-sm cursor-pointer hover:shadow-md transition-all group"
+        onClick={() => setIsOpen(true)}
+      >
+        <CardContent className="p-6 flex items-center justify-center gap-3">
+          <div className="p-2.5 rounded-full bg-warning/10 group-hover:bg-warning/15 transition-colors">
+            <Minus className="h-5 w-5 text-warning" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Add Expense</p>
+            <p className="text-xs text-muted-foreground">Track business expenses</p>
           </div>
         </CardContent>
       </Card>
@@ -89,15 +87,15 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
   }
 
   return (
-    <Card className="stats-card">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+    <Card className="rounded-2xl border-border/50 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-base">
           <span>Add Expense</span>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => setIsOpen(false)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground rounded-full h-8 px-3 text-xs"
           >
             Cancel
           </Button>
@@ -105,33 +103,33 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="expense-date">Date</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="expense-date" className="text-xs text-muted-foreground">Date</Label>
             <Input
               id="expense-date"
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange('date', e.target.value)}
-              className="form-input"
+              className="h-11 rounded-xl border-border/60 bg-secondary/30"
               required
             />
           </div>
 
-          <div>
-            <Label htmlFor="expense-name">Expense Name</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="expense-name" className="text-xs text-muted-foreground">Expense Name</Label>
             <Input
               id="expense-name"
               type="text"
-              placeholder="e.g., Gas, Car maintenance, Phone bill"
+              placeholder="e.g., Gas, Car maintenance"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="form-input"
+              className="h-11 rounded-xl border-border/60 bg-secondary/30"
               required
             />
           </div>
 
-          <div>
-            <Label htmlFor="expense-amount">Amount</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="expense-amount" className="text-xs text-muted-foreground">Amount ($)</Label>
             <Input
               id="expense-amount"
               type="number"
@@ -139,12 +137,12 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
               placeholder="0.00"
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
-              className="form-input"
+              className="h-11 rounded-xl border-border/60 bg-secondary/30 text-lg font-medium"
               required
             />
           </div>
 
-          <Button type="submit" className="btn-gig w-full">
+          <Button type="submit" className="w-full h-11 rounded-full font-medium">
             Add Expense
           </Button>
         </form>

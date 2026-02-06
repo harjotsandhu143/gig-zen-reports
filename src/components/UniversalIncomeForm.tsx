@@ -44,7 +44,6 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
     incomeType: "gig",
   });
 
-  // Load form data from localStorage on mount
   useEffect(() => {
     const savedData = localStorage.getItem("universalIncomeFormData");
     if (savedData) {
@@ -57,7 +56,6 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
     }
   }, []);
 
-  // Save form data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("universalIncomeFormData", JSON.stringify(formData));
   }, [formData]);
@@ -81,7 +79,6 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
       incomeType: formData.incomeType,
     });
 
-    // Clear localStorage after successful submission
     localStorage.removeItem("universalIncomeFormData");
     setFormData({
       date: getAustraliaDateString(),
@@ -100,22 +97,16 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
   if (!isOpen) {
     return (
       <Card
-        className="stats-card cursor-pointer"
+        className="rounded-2xl border-border/50 shadow-sm cursor-pointer hover:shadow-md transition-all group"
         onClick={() => setIsOpen(true)}
       >
-        <CardContent className="p-6 text-center">
-          <div className="flex items-center justify-center gap-3">
-            <div className="p-3 rounded-full bg-success-light">
-              <Plus className="h-6 w-6 text-success" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-foreground">
-                Add Income
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Track earnings from any source
-              </p>
-            </div>
+        <CardContent className="p-6 flex items-center justify-center gap-3">
+          <div className="p-2.5 rounded-full bg-success/10 group-hover:bg-success/15 transition-colors">
+            <Plus className="h-5 w-5 text-success" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Add Income</p>
+            <p className="text-xs text-muted-foreground">Track earnings from any source</p>
           </div>
         </CardContent>
       </Card>
@@ -123,15 +114,15 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
   }
 
   return (
-    <Card className="stats-card">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+    <Card className="rounded-2xl border-border/50 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-base">
           <span>Add Income</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsOpen(false)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground rounded-full h-8 px-3 text-xs"
           >
             Cancel
           </Button>
@@ -139,28 +130,28 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="date">Date</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="date" className="text-xs text-muted-foreground">Date</Label>
             <Input
               id="date"
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange("date", e.target.value)}
-              className="form-input"
+              className="h-11 rounded-xl border-border/60 bg-secondary/30"
               required
             />
           </div>
 
-          <div>
-            <Label htmlFor="source">Income Source</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="source" className="text-xs text-muted-foreground">Income Source</Label>
             <Select
               value={formData.sourceName}
               onValueChange={(value) => handleInputChange("sourceName", value)}
             >
-              <SelectTrigger className="form-input">
-                <SelectValue placeholder="Select or type a source" />
+              <SelectTrigger className="h-11 rounded-xl border-border/60 bg-secondary/30">
+                <SelectValue placeholder="Select a source" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {COMMON_SOURCES.map((source) => (
                   <SelectItem key={source} value={source}>
                     {source}
@@ -171,32 +162,30 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
           </div>
 
           {formData.sourceName === "Other" && (
-            <div>
-              <Label htmlFor="customSource">Custom Source Name</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="customSource" className="text-xs text-muted-foreground">Custom Source</Label>
               <Input
                 id="customSource"
                 type="text"
                 placeholder="e.g., Tutoring, Etsy sales"
                 value={formData.customSource}
-                onChange={(e) =>
-                  handleInputChange("customSource", e.target.value)
-                }
-                className="form-input"
+                onChange={(e) => handleInputChange("customSource", e.target.value)}
+                className="h-11 rounded-xl border-border/60 bg-secondary/30"
                 required
               />
             </div>
           )}
 
-          <div>
-            <Label htmlFor="incomeType">Income Type</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="incomeType" className="text-xs text-muted-foreground">Income Type</Label>
             <Select
               value={formData.incomeType}
               onValueChange={(value) => handleInputChange("incomeType", value)}
             >
-              <SelectTrigger className="form-input">
+              <SelectTrigger className="h-11 rounded-xl border-border/60 bg-secondary/30">
                 <SelectValue placeholder="Select income type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {INCOME_TYPES.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
@@ -204,13 +193,13 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              This helps estimate tax to set aside
+            <p className="text-[11px] text-muted-foreground">
+              Helps estimate tax to set aside
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="amount">Amount ($)</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="amount" className="text-xs text-muted-foreground">Amount ($)</Label>
             <Input
               id="amount"
               type="number"
@@ -218,12 +207,12 @@ export function UniversalIncomeForm({ onIncomeAdd }: UniversalIncomeFormProps) {
               placeholder="0.00"
               value={formData.amount}
               onChange={(e) => handleInputChange("amount", e.target.value)}
-              className="form-input text-lg"
+              className="h-11 rounded-xl border-border/60 bg-secondary/30 text-lg font-medium"
               required
             />
           </div>
 
-          <Button type="submit" className="btn-income w-full">
+          <Button type="submit" className="w-full h-11 rounded-full font-medium bg-success hover:bg-success/90 text-success-foreground">
             Add Income
           </Button>
         </form>
