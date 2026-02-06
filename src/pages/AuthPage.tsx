@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -55,59 +54,64 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="p-3 rounded-full bg-primary/10">
-              <DollarSign className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground mb-2">
             Gig Zen
-          </CardTitle>
-          <CardDescription>
-            {isLogin ? 'Sign in to track your income & expenses' : 'Create an account to get started'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12"
-              />
-            </div>
-            <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-12"
-              />
-            </div>
-            <Button type="submit" className="w-full h-12" disabled={loading}>
-              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-            </Button>
-          </form>
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-            </button>
+          </h1>
+          <p className="text-muted-foreground text-base">
+            {isLogin ? 'Welcome back.' : 'Create your account.'}
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-12 rounded-xl bg-secondary/50 border-border/50 px-4 text-base placeholder:text-muted-foreground/60 focus-visible:ring-primary/20 focus-visible:ring-4 focus-visible:border-primary/40"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="h-12 rounded-xl bg-secondary/50 border-border/50 px-4 text-base placeholder:text-muted-foreground/60 focus-visible:ring-primary/20 focus-visible:ring-4 focus-visible:border-primary/40"
+            />
+          </div>
+          <Button 
+            type="submit" 
+            className="w-full h-12 rounded-full text-base font-medium mt-2" 
+            disabled={loading}
+          >
+            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+          </Button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+          >
+            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

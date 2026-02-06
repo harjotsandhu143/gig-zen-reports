@@ -3,6 +3,7 @@ import { BarChart3, Home, LogOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,41 +22,55 @@ export function Navigation() {
   const { signOut } = useAuth();
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
-      <nav className="flex gap-2 flex-wrap">
+    <nav className="flex items-center gap-1.5 mb-8 flex-wrap">
+      <div className="flex items-center gap-1 bg-secondary/60 rounded-full p-1">
         <Button
-          variant={location.pathname === '/' ? 'default' : 'outline'}
+          variant="ghost"
           asChild
           size="sm"
+          className={`rounded-full px-4 h-8 text-sm font-medium transition-all ${
+            location.pathname === '/'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
-          <Link to="/" className="flex items-center gap-2">
-            <Home className="h-4 w-4" />
+          <Link to="/" className="flex items-center gap-1.5">
+            <Home className="h-3.5 w-3.5" />
             Dashboard
           </Link>
         </Button>
         <Button
-          variant={location.pathname === '/table' ? 'default' : 'outline'}
+          variant="ghost"
           asChild
           size="sm"
+          className={`rounded-full px-4 h-8 text-sm font-medium transition-all ${
+            location.pathname === '/table'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
-          <Link to="/table" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Data Table
+          <Link to="/table" className="flex items-center gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Data
           </Link>
         </Button>
+      </div>
+
+      <div className="ml-auto flex items-center gap-1">
+        <ThemeToggle />
         
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="border-warning/50 text-warning hover:bg-warning hover:text-warning-foreground"
+              className="rounded-full h-8 px-3 text-muted-foreground hover:text-foreground text-sm"
             >
-              <RotateCcw className="h-4 w-4 mr-1" />
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               New Week
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className="rounded-2xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Start a New Week?</AlertDialogTitle>
               <AlertDialogDescription>
@@ -64,8 +79,8 @@ export function Navigation() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={resetData}>
+              <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={resetData} className="rounded-full">
                 Start Fresh
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -73,14 +88,15 @@ export function Navigation() {
         </AlertDialog>
         
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={signOut}
+          className="rounded-full h-8 px-3 text-muted-foreground hover:text-foreground text-sm"
         >
-          <LogOut className="h-4 w-4 mr-1" />
-          Logout
+          <LogOut className="h-3.5 w-3.5 mr-1.5" />
+          Sign Out
         </Button>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }
