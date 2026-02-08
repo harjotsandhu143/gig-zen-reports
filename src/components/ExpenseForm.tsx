@@ -70,66 +70,63 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
   if (!isOpen) {
     return (
       <Card
-        className="rounded-2xl border-border/50 shadow-sm cursor-pointer hover:shadow-md transition-all group"
+        className="rounded-2xl border-0 shadow-[var(--shadow)] cursor-pointer hover:shadow-[var(--shadow-md)] transition-shadow"
         onClick={() => setIsOpen(true)}
       >
         <CardContent className="p-6 flex items-center justify-center gap-3">
-          <div className="p-2.5 rounded-full bg-warning/10 group-hover:bg-warning/15 transition-colors">
-            <Minus className="h-5 w-5 text-warning" />
+          <div className="p-2 rounded-full bg-secondary">
+            <Minus className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">Add Expense</p>
-            <p className="text-xs text-muted-foreground">Track business expenses</p>
-          </div>
+          <span className="text-sm font-medium text-foreground">Add Expense</span>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="rounded-2xl border-border/50 shadow-sm">
+    <Card className="rounded-2xl border-0 shadow-[var(--shadow-md)]">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between text-base">
+        <CardTitle className="flex items-center justify-between text-sm">
           <span>Add Expense</span>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => setIsOpen(false)}
-            className="text-muted-foreground hover:text-foreground rounded-full h-8 px-3 text-xs"
+            className="text-muted-foreground hover:text-foreground rounded-full h-7 px-3 text-xs"
           >
             Cancel
           </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="expense-date" className="text-xs text-muted-foreground">Date</Label>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="expense-date" className="text-[11px] uppercase tracking-wider text-muted-foreground">Date</Label>
             <Input
               id="expense-date"
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange('date', e.target.value)}
-              className="h-11 rounded-xl border-border/60 bg-secondary/30"
+              className="h-10 rounded-xl border-0 bg-secondary text-sm"
               required
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="expense-name" className="text-xs text-muted-foreground">Expense Name</Label>
+          <div className="space-y-1">
+            <Label htmlFor="expense-name" className="text-[11px] uppercase tracking-wider text-muted-foreground">Name</Label>
             <Input
               id="expense-name"
               type="text"
-              placeholder="e.g., Gas, Car maintenance"
+              placeholder="e.g., Gas, maintenance"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="h-11 rounded-xl border-border/60 bg-secondary/30"
+              className="h-10 rounded-xl border-0 bg-secondary text-sm"
               required
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="expense-amount" className="text-xs text-muted-foreground">Amount ($)</Label>
+          <div className="space-y-1">
+            <Label htmlFor="expense-amount" className="text-[11px] uppercase tracking-wider text-muted-foreground">Amount ($)</Label>
             <Input
               id="expense-amount"
               type="number"
@@ -137,12 +134,12 @@ export function ExpenseForm({ onExpenseAdd }: ExpenseFormProps) {
               placeholder="0.00"
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
-              className="h-11 rounded-xl border-border/60 bg-secondary/30 text-lg font-medium"
+              className="h-10 rounded-xl border-0 bg-secondary text-lg font-semibold"
               required
             />
           </div>
 
-          <Button type="submit" className="w-full h-11 rounded-full font-medium">
+          <Button type="submit" className="w-full h-10 rounded-full text-sm font-medium">
             Add Expense
           </Button>
         </form>

@@ -1,4 +1,4 @@
-import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, Receipt, DollarSign } from "lucide-react";
+import { FileDown, Target, Wallet, ChevronLeft, ChevronRight, TrendingUp, DollarSign } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +45,7 @@ export function Dashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-foreground/20 border-t-foreground/60 mx-auto mb-4"></div>
           <p className="text-muted-foreground text-sm">Loading...</p>
         </div>
       </div>
@@ -56,7 +56,6 @@ export function Dashboard() {
     return <Onboarding onComplete={completeOnboarding} />;
   }
 
-  // === All calculations unchanged ===
   const doordashIncome = incomes.reduce((sum, income) => sum + income.doordash, 0);
   const ubereatsIncome = incomes.reduce((sum, income) => sum + income.ubereats, 0);
   const didiIncome = incomes.reduce((sum, income) => sum + income.didi, 0);
@@ -97,25 +96,30 @@ export function Dashboard() {
     generateFinancialReport(incomes, expenses);
   };
 
+  const barChartData = [
+    { name: 'DoorDash', weekly: doordashIncome, today: todayDoordash },
+    { name: 'Uber Eats', weekly: ubereatsIncome, today: todayUbereats },
+    { name: 'DiDi', weekly: didiIncome, today: todayDidi },
+    { name: 'Coles (Net)', weekly: colesNetIncome, today: todayColesNet },
+    { name: 'Other', weekly: tipsIncome, today: todayTips }
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-4xl mx-auto px-4 md:px-6 pt-6 md:pt-10">
+      <div className="max-w-3xl mx-auto px-5 md:px-8 pt-8 md:pt-12">
         {/* Header */}
-        <header className="mb-6 animate-fade-in">
+        <header className="mb-8">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground">
-                Gig Zen
-              </h1>
-              <p className="text-muted-foreground text-sm mt-1">Your income & expense companion</p>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+              Gig Zen
+            </h1>
             <Button 
               onClick={handleExportPDF} 
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="rounded-full border-border/60 hover:bg-secondary text-sm h-9 px-4"
+              className="rounded-full text-muted-foreground hover:text-foreground text-sm h-9 px-4"
             >
-              <FileDown className="w-3.5 h-3.5 mr-1.5" />
+              <FileDown className="w-4 h-4 mr-1.5" />
               Export
             </Button>
           </div>
@@ -123,68 +127,111 @@ export function Dashboard() {
 
         <Navigation />
 
-        {/* Top Summary Cards */}
-        <section className="grid grid-cols-2 gap-3 md:gap-4 mb-8">
-          {/* Total Income */}
-          <MetricCard
-            label="Total Income"
-            value={`$${totalIncome.toFixed(2)}`}
-            valueColor="text-success"
-            icon={<TrendingUp className="h-4 w-4" />}
-            iconBg="bg-success/10"
-            iconColor="text-success"
-            subtitle={
-              remaining > 0 
-                ? `$${remaining.toFixed(2)} to target` 
-                : remaining < 0 
-                  ? `+$${Math.abs(remaining).toFixed(2)} over target` 
-                  : 'Target reached'
-            }
-            delay={0}
-          />
+        {/* Hero Cards — Total Income & After Expenses */}
+        <section className="grid grid-cols-2 gap-4 mb-6">
+          <Card className="rounded-2xl border-0 shadow-[var(--shadow-md)]">
+            <CardContent className="p-6">
+              <p className="text-xs font-medium text-muted-foreground tracking-wide uppercase mb-2">Total Income</p>
+              <p className="text-3xl md:text-4xl font-bold tracking-tight text-success">
+                ${totalIncome.toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {remaining > 0 
+                  ? `$${remaining.toFixed(2)} to target` 
+                  : remaining < 0 
+                    ? `+$${Math.abs(remaining).toFixed(2)} over target` 
+                    : 'Target reached'}
+              </p>
+            </CardContent>
+          </Card>
 
-          {/* After Expenses */}
-          <MetricCard
-            label="After Expenses"
-            value={`$${netBalance.toFixed(2)}`}
-            valueColor={netBalance >= 0 ? 'text-success' : 'text-destructive'}
-            icon={<Wallet className="h-4 w-4" />}
-            iconBg="bg-primary/8"
-            iconColor="text-primary"
-            subtitle={`Expenses: $${totalExpenses.toFixed(2)}`}
-            delay={0.05}
-          />
+          <Card className="rounded-2xl border-0 shadow-[var(--shadow-md)]">
+            <CardContent className="p-6">
+              <p className="text-xs font-medium text-muted-foreground tracking-wide uppercase mb-2">After Expenses</p>
+              <p className={`text-3xl md:text-4xl font-bold tracking-tight ${netBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+                ${netBalance.toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Expenses: ${totalExpenses.toFixed(2)}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
 
-          {/* Today's Earnings */}
-          <MetricCard
-            label="Today (Gross)"
-            value={`$${todaysGrossIncome.toFixed(2)}`}
-            valueColor="text-foreground"
-            icon={<TrendingUp className="h-4 w-4" />}
-            iconBg="bg-success/10"
-            iconColor="text-success"
-            delay={0.1}
-          />
+        {/* Secondary Metric Cards */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          <SecondaryCard label="Today (Gross)" value={`$${todaysGrossIncome.toFixed(2)}`} />
+          <SecondaryCard label="Today's Gig" value={`$${(todayDoordash + todayUbereats + todayDidi + todayTips).toFixed(2)}`} />
+          <SecondaryCard label="Gig Income" value={`$${gigIncome.toFixed(2)}`} />
+          <div className="flex items-center justify-center">
+            <Card className="rounded-2xl border-0 shadow-[var(--shadow)] w-full">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="relative w-14 h-14 flex-shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Earned', value: Math.min(totalIncome, weeklyTarget || 1) },
+                          { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalIncome) }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={18}
+                        outerRadius={26}
+                        startAngle={90}
+                        endAngle={-270}
+                        dataKey="value"
+                        strokeWidth={0}
+                      >
+                        <Cell fill="hsl(var(--success))" />
+                        <Cell fill="hsl(var(--border))" />
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[11px] font-semibold text-foreground">
+                      {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalIncome / weeklyTarget) * 100))}%` : '0%'}
+                    </span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Target</p>
+                  <p className="text-lg font-semibold text-foreground">${weeklyTarget.toFixed(0)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
-          {/* Today's Gig */}
-          <MetricCard
-            label="Today's Gig"
-            value={`$${(todayDoordash + todayUbereats + todayDidi + todayTips).toFixed(2)}`}
-            valueColor="text-foreground"
-            icon={<DollarSign className="h-4 w-4" />}
-            iconBg="bg-muted"
-            iconColor="text-muted-foreground"
-            delay={0.15}
-          />
+        {/* Weekly Target Input */}
+        <section className="mb-6">
+          <Card className="rounded-2xl border-0 shadow-[var(--shadow)]">
+            <CardContent className="p-5 flex items-center gap-4">
+              <Target className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1">
+                <Label htmlFor="weekly-target" className="text-[11px] uppercase tracking-wider text-muted-foreground">Weekly Target</Label>
+                <Input
+                  id="weekly-target"
+                  type="number"
+                  value={targetInput}
+                  onChange={(e) => setTargetInput(e.target.value)}
+                  onBlur={handleTargetUpdate}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTargetUpdate()}
+                  className="h-9 text-xl font-semibold border-0 bg-transparent p-0 mt-0.5 focus-visible:ring-0"
+                  placeholder="0"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Coles Weekly Summary */}
         {hasAnyColes && (
-          <section className="mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <Card className="rounded-2xl border-border/50 shadow-sm overflow-hidden">
+          <section className="mb-8">
+            <Card className="rounded-2xl border-0 shadow-[var(--shadow)]">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-foreground">Coles Weekly</span>
+                  <span className="text-sm font-semibold text-foreground">Coles Weekly</span>
                   <div className="flex items-center gap-1.5">
                     <Button
                       variant="ghost"
@@ -215,17 +262,17 @@ export function Dashboard() {
               <CardContent>
                 {weeklyColesIncome > 0 ? (
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-4 rounded-xl bg-secondary/50">
-                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Gross</p>
-                      <p className="text-xl font-semibold text-foreground">${weeklyColesIncome.toFixed(2)}</p>
+                    <div className="text-center p-4 rounded-xl bg-secondary">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Gross</p>
+                      <p className="text-lg font-semibold text-foreground">${weeklyColesIncome.toFixed(2)}</p>
                     </div>
-                    <div className="text-center p-4 rounded-xl bg-warning/5">
-                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Tax</p>
-                      <p className="text-xl font-semibold text-warning">${weeklyTax.toFixed(2)}</p>
+                    <div className="text-center p-4 rounded-xl bg-secondary">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Tax</p>
+                      <p className="text-lg font-semibold text-foreground">${weeklyTax.toFixed(2)}</p>
                     </div>
-                    <div className="text-center p-4 rounded-xl bg-success/5">
-                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">Net</p>
-                      <p className="text-xl font-semibold text-success">${weeklyNetPay.toFixed(2)}</p>
+                    <div className="text-center p-4 rounded-xl bg-secondary">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Net</p>
+                      <p className="text-lg font-semibold text-success">${weeklyNetPay.toFixed(2)}</p>
                     </div>
                   </div>
                 ) : (
@@ -238,141 +285,27 @@ export function Dashboard() {
           </section>
         )}
 
-        {/* Stats Row */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
-          {/* Weekly Target Input */}
-          <Card className="rounded-2xl border-border/50 shadow-sm animate-fade-in">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-primary/8">
-                  <Target className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <Label htmlFor="weekly-target" className="text-[11px] uppercase tracking-wider text-muted-foreground">Weekly Target</Label>
-                  <Input
-                    id="weekly-target"
-                    type="number"
-                    value={targetInput}
-                    onChange={(e) => setTargetInput(e.target.value)}
-                    onBlur={handleTargetUpdate}
-                    onKeyDown={(e) => e.key === 'Enter' && handleTargetUpdate()}
-                    className="h-10 text-2xl font-semibold border-0 bg-transparent p-0 mt-0.5 focus-visible:ring-0"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Total Income */}
-          <Card className="rounded-2xl border-border/50 shadow-sm animate-fade-in" style={{ animationDelay: '0.05s' }}>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-success/10">
-                  <TrendingUp className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Total Income</p>
-                  <p className="text-2xl font-semibold mt-0.5 text-success">${totalIncome.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {remaining > 0 
-                      ? <span className="text-warning">${remaining.toFixed(2)} left</span>
-                      : remaining < 0 
-                        ? <span className="text-success">+${Math.abs(remaining).toFixed(2)} over</span>
-                        : <span className="text-success">Target reached</span>}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Gig Income */}
-          <Card className="rounded-2xl border-border/50 shadow-sm animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-muted">
-                  <DollarSign className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Gig Income</p>
-                  <p className="text-2xl font-semibold mt-0.5 text-foreground">${gigIncome.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    DoorDash + Uber + DiDi + Tips
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Progress Ring */}
-          <Card className="rounded-2xl border-border/50 shadow-sm animate-fade-in" style={{ animationDelay: '0.15s' }}>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4">
-                <div className="relative w-20 h-20 flex-shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Earned', value: Math.min(totalIncome, weeklyTarget || 1) },
-                          { name: 'Remaining', value: Math.max(0, (weeklyTarget || 1) - totalIncome) }
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={26}
-                        outerRadius={38}
-                        startAngle={90}
-                        endAngle={-270}
-                        dataKey="value"
-                        strokeWidth={0}
-                      >
-                        <Cell fill="hsl(var(--success))" />
-                        <Cell fill="hsl(var(--muted))" />
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-foreground">
-                      {weeklyTarget > 0 ? `${Math.min(100, Math.round((totalIncome / weeklyTarget) * 100))}%` : '0%'}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Net Balance</p>
-                  <p className="text-2xl font-semibold text-foreground mt-0.5">${netBalance.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Income − Expenses</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Forms */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        {/* Forms — equal width pill buttons */}
+        <section className="grid grid-cols-2 gap-4 mb-8">
           <UniversalIncomeForm onIncomeAdd={addUniversalIncome} />
           <ExpenseForm onExpenseAdd={addExpense} />
         </section>
 
-        {/* Income Breakdown */}
-        <section className="mb-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-          <Card className="rounded-2xl border-border/50 shadow-sm">
+        {/* Income Breakdown — grayscale with green accent */}
+        <section className="mb-8">
+          <Card className="rounded-2xl border-0 shadow-[var(--shadow)]">
             <CardHeader>
-              <CardTitle className="text-base font-semibold text-foreground">
+              <CardTitle className="text-sm font-semibold text-foreground">
                 Income Breakdown
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={[
-                      { name: 'DoorDash', weekly: doordashIncome, today: todayDoordash },
-                      { name: 'Uber Eats', weekly: ubereatsIncome, today: todayUbereats },
-                      { name: 'DiDi', weekly: didiIncome, today: todayDidi },
-                      { name: 'Coles (Net)', weekly: colesNetIncome, today: todayColesNet },
-                      { name: 'Other', weekly: tipsIncome, today: todayTips }
-                    ]}
+                    data={barChartData}
                     layout="vertical"
-                    margin={{ top: 5, right: 30, left: 70, bottom: 5 }}
+                    margin={{ top: 0, right: 20, left: 65, bottom: 0 }}
                   >
                     <XAxis 
                       type="number" 
@@ -397,35 +330,23 @@ export function Dashboard() {
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '12px',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
                         fontSize: '13px',
                       }}
                       cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                     />
-                    <Bar dataKey="weekly" radius={[0, 6, 6, 0]} barSize={16} name="weekly">
-                      <Cell fill="hsl(var(--destructive))" />
-                      <Cell fill="hsl(var(--success))" />
-                      <Cell fill="hsl(var(--warning))" />
-                      <Cell fill="hsl(var(--primary))" />
-                      <Cell fill="hsl(var(--muted-foreground))" />
-                    </Bar>
-                    <Bar dataKey="today" radius={[0, 6, 6, 0]} barSize={16} name="today">
-                      <Cell fill="hsl(var(--destructive) / 0.4)" />
-                      <Cell fill="hsl(var(--success) / 0.4)" />
-                      <Cell fill="hsl(var(--warning) / 0.4)" />
-                      <Cell fill="hsl(var(--primary) / 0.4)" />
-                      <Cell fill="hsl(var(--muted-foreground) / 0.4)" />
-                    </Bar>
+                    <Bar dataKey="weekly" radius={[0, 4, 4, 0]} barSize={14} name="weekly" fill="hsl(var(--foreground) / 0.18)" />
+                    <Bar dataKey="today" radius={[0, 4, 4, 0]} barSize={14} name="today" fill="hsl(var(--success))" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="flex justify-center gap-6 mt-3 text-xs">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-success"></div>
+                  <div className="w-2 h-2 rounded-full bg-foreground/18"></div>
                   <span className="text-muted-foreground">Total</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-success/40"></div>
+                  <div className="w-2 h-2 rounded-full bg-success"></div>
                   <span className="text-muted-foreground">Today</span>
                 </div>
               </div>
@@ -433,8 +354,7 @@ export function Dashboard() {
           </Card>
         </section>
 
-        {/* Disclaimer */}
-        <p className="text-[11px] text-center text-muted-foreground/60 mb-6">
+        <p className="text-[11px] text-center text-muted-foreground/50 mb-6">
           Estimate only — not financial advice.
         </p>
       </div>
@@ -442,39 +362,13 @@ export function Dashboard() {
   );
 }
 
-/* Reusable Metric Card */
-function MetricCard({ 
-  label, value, valueColor, icon, iconBg, iconColor, subtitle, delay = 0 
-}: {
-  label: string;
-  value: string;
-  valueColor: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  iconColor: string;
-  subtitle?: string;
-  delay?: number;
-}) {
+/* Secondary metric card — small, monochrome */
+function SecondaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card 
-      className="rounded-2xl border-border/50 shadow-sm animate-fade-in"
-      style={{ animationDelay: `${delay}s` }}
-    >
+    <Card className="rounded-2xl border-0 shadow-[var(--shadow)]">
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-xl ${iconBg}`}>
-            <span className={iconColor}>{icon}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-            <p className={`text-xl md:text-2xl font-semibold tracking-tight ${valueColor}`}>
-              {value}
-            </p>
-            {subtitle && (
-              <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
-            )}
-          </div>
-        </div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
+        <p className="text-lg font-semibold text-foreground">{value}</p>
       </CardContent>
     </Card>
   );

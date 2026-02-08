@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Home, LogOut, RotateCcw } from 'lucide-react';
+import { Home, BarChart3, LogOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,13 +22,13 @@ export function Navigation() {
   const { signOut } = useAuth();
 
   return (
-    <nav className="flex items-center gap-1.5 mb-8 flex-wrap">
-      <div className="flex items-center gap-1 bg-secondary/60 rounded-full p-1">
+    <nav className="flex items-center gap-2 mb-10 flex-wrap">
+      <div className="flex items-center bg-secondary rounded-full p-1">
         <Button
           variant="ghost"
           asChild
           size="sm"
-          className={`rounded-full px-4 h-8 text-sm font-medium transition-all ${
+          className={`rounded-full px-5 h-8 text-sm font-medium transition-all ${
             location.pathname === '/'
               ? 'bg-card text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
@@ -43,7 +43,7 @@ export function Navigation() {
           variant="ghost"
           asChild
           size="sm"
-          className={`rounded-full px-4 h-8 text-sm font-medium transition-all ${
+          className={`rounded-full px-5 h-8 text-sm font-medium transition-all ${
             location.pathname === '/table'
               ? 'bg-card text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
