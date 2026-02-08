@@ -1,149 +1,131 @@
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Apple-Inspired Design System */
-
 @layer base {
   :root {
-    /* Background & Surface — Apple's warm whites */
+    /* Monochrome Apple palette */
     --background: 0 0% 98%;
-    --foreground: 0 0% 11%;
+    --foreground: 0 0% 7%;
     --surface: 0 0% 100%;
     --surface-secondary: 0 0% 96%;
 
-    /* Card — clean white with subtle warmth */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 11%;
-    --card-border: 0 0% 92%;
+    --card-foreground: 0 0% 7%;
+    --card-border: 0 0% 93%;
 
-    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 11%;
+    --popover-foreground: 0 0% 7%;
 
-    /* Brand — Apple blue */
-    --primary: 211 100% 50%;
+    /* Single accent — system green */
+    --primary: 0 0% 20%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 211 100% 45%;
-    --primary-light: 211 100% 96%;
+    --primary-hover: 0 0% 15%;
+    --primary-light: 0 0% 96%;
 
-    /* Success — muted green */
-    --success: 142 64% 42%;
+    --success: 142 64% 40%;
     --success-foreground: 0 0% 100%;
     --success-light: 142 64% 96%;
 
-    /* Warning — warm amber */
-    --warning: 32 95% 52%;
+    --warning: 0 0% 45%;
     --warning-foreground: 0 0% 100%;
-    --warning-light: 32 95% 96%;
+    --warning-light: 0 0% 96%;
 
-    /* Secondary & Muted — Apple greys */
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 25%;
+    --secondary-foreground: 0 0% 30%;
 
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 46%;
 
     --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 25%;
+    --accent-foreground: 0 0% 20%;
 
-    /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Form Elements */
-    --border: 0 0% 91%;
+    --border: 0 0% 92%;
     --input: 0 0% 100%;
-    --input-border: 0 0% 85%;
-    --ring: 211 100% 50%;
+    --input-border: 0 0% 88%;
+    --ring: 0 0% 20%;
 
-    /* Design Tokens */
     --radius: 0.875rem;
 
-    /* Shadows — Apple-style diffused */
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-    --shadow: 0 2px 8px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
-    --shadow-xl: 0 16px 48px rgba(0,0,0,0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
+    --shadow: 0 1px 4px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
 
-    /* Transitions — Apple smooth */
-    --transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-    --transition-smooth: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-
-    /* Glassmorphism */
     --glass-bg: rgba(255, 255, 255, 0.72);
     --glass-border: rgba(255, 255, 255, 0.18);
     --glass-blur: 20px;
 
-    /* Sidebar */
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 25%;
-    --sidebar-primary: 0 0% 11%;
+    --sidebar-foreground: 0 0% 30%;
+    --sidebar-primary: 0 0% 7%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 0 0% 95%;
-    --sidebar-accent-foreground: 0 0% 11%;
+    --sidebar-accent-foreground: 0 0% 7%;
     --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 211 100% 50%;
+    --sidebar-ring: 0 0% 20%;
   }
 
   .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 93%;
-    --surface: 0 0% 10%;
-    --surface-secondary: 0 0% 12%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 92%;
+    --surface: 0 0% 7%;
+    --surface-secondary: 0 0% 10%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 93%;
-    --card-border: 0 0% 18%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 92%;
+    --card-border: 0 0% 16%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 93%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 92%;
 
-    --primary: 211 100% 55%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 211 100% 60%;
-    --primary-light: 211 100% 15%;
+    --primary: 0 0% 90%;
+    --primary-foreground: 0 0% 0%;
+    --primary-hover: 0 0% 95%;
+    --primary-light: 0 0% 12%;
 
     --success: 142 64% 48%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 64% 12%;
+    --success-light: 142 64% 10%;
 
-    --warning: 32 95% 55%;
+    --warning: 0 0% 60%;
     --warning-foreground: 0 0% 100%;
-    --warning-light: 32 95% 12%;
+    --warning-light: 0 0% 14%;
 
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 85%;
 
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 50%;
 
-    --accent: 0 0% 14%;
+    --accent: 0 0% 12%;
     --accent-foreground: 0 0% 85%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 12%;
-    --input-border: 0 0% 24%;
-    --ring: 211 100% 55%;
+    --border: 0 0% 16%;
+    --input: 0 0% 10%;
+    --input-border: 0 0% 22%;
+    --ring: 0 0% 90%;
 
-    --glass-bg: rgba(28, 28, 30, 0.72);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(20, 20, 20, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.06);
     --glass-blur: 20px;
 
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 211 100% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 14%;
+    --sidebar-primary: 0 0% 90%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 211 100% 55%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 0 0% 90%;
   }
 }
 
@@ -156,90 +138,5 @@
     @apply bg-background text-foreground font-sans antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-}
-
-@layer components {
-  /* Apple-style glass card */
-  .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--glass-border);
-  }
-
-  /* Card Components — Apple clean */
-  .card-gradient {
-    background: hsl(var(--card));
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-  }
-
-  .card-gradient:hover {
-    box-shadow: var(--shadow-md);
-  }
-
-  /* Stats Cards — Apple style */
-  .stats-card {
-    @apply bg-card rounded-2xl p-0;
-    border: 1px solid hsl(var(--card-border));
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-  }
-
-  .stats-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-  }
-
-  /* Button Variants — Apple rounded pills */
-  .btn-gig {
-    @apply rounded-full px-6 py-3 font-medium text-sm;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition);
-  }
-
-  .btn-gig:hover {
-    background: hsl(var(--primary-hover));
-    box-shadow: var(--shadow);
-    transform: scale(1.02);
-  }
-
-  .btn-income {
-    background: hsl(var(--success));
-    color: hsl(var(--success-foreground));
-  }
-
-  .btn-income:hover {
-    filter: brightness(1.05);
-  }
-
-  /* Form Elements — Apple clean */
-  .form-input {
-    @apply w-full px-4 py-3 rounded-xl border;
-    background: hsl(var(--input));
-    border-color: hsl(var(--input-border));
-    transition: var(--transition);
-  }
-
-  .form-input:focus {
-    outline: none;
-    border-color: hsl(var(--ring));
-    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.12);
-  }
-
-  /* Income/Expense Cards */
-  .income-card {
-    background: hsl(var(--success));
-    color: hsl(var(--success-foreground));
-    box-shadow: var(--shadow);
-  }
-
-  .expense-card {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    box-shadow: var(--shadow);
   }
 }

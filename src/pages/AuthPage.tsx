@@ -55,47 +55,41 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background relative">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
       
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground mb-2">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">
             Gig Zen
           </h1>
-          <p className="text-muted-foreground text-base">
+          <p className="text-muted-foreground text-sm">
             {isLogin ? 'Welcome back.' : 'Create your account.'}
           </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-12 rounded-xl bg-secondary/50 border-border/50 px-4 text-base placeholder:text-muted-foreground/60 focus-visible:ring-primary/20 focus-visible:ring-4 focus-visible:border-primary/40"
-            />
-          </div>
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="h-12 rounded-xl bg-secondary/50 border-border/50 px-4 text-base placeholder:text-muted-foreground/60 focus-visible:ring-primary/20 focus-visible:ring-4 focus-visible:border-primary/40"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="h-12 rounded-xl bg-secondary border-0 px-4 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            className="h-12 rounded-xl bg-secondary border-0 px-4 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20"
+          />
           <Button 
             type="submit" 
-            className="w-full h-12 rounded-full text-base font-medium mt-2" 
+            className="w-full h-12 rounded-full text-sm font-medium mt-3" 
             disabled={loading}
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
@@ -106,7 +100,7 @@ export default function AuthPage() {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
