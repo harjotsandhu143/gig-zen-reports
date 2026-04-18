@@ -41,16 +41,7 @@ export function Dashboard() {
     setWeeklyTarget(target);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-foreground/20 border-t-foreground/60 mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // No blocking spinner — render instantly with cached data; revalidation happens in background
 
   if (!hasCompletedOnboarding) {
     return <Onboarding onComplete={completeOnboarding} />;
