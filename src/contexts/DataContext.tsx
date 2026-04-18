@@ -60,12 +60,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   // Hydrate synchronously from localStorage cache so the UI renders instantly
   const cacheKey = (k: string) => user ? `cache:${user.id}:${k}` : `cache:anon:${k}`;
-  const readCache = <T,>(key: string, fallback: T): T => {
+  function readCache<T>(key: string, fallback: T): T {
     try {
       const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
       return raw ? (JSON.parse(raw) as T) : fallback;
-    } catch { return fallback; }
-  };
+    } catch {
+      return fallback;
+    }
+  }
 
   const [incomes, setIncomes] = useState<Income[]>(() => readCache(`cache:${user?.id ?? 'anon'}:incomes`, []));
   const [expenses, setExpenses] = useState<Expense[]>(() => readCache(`cache:${user?.id ?? 'anon'}:expenses`, []));
