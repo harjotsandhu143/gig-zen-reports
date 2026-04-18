@@ -58,15 +58,42 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [incomes, setIncomes] = useState<Income[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [taxRate, setTaxRateState] = useState(20);
-  const [weeklyTarget, setWeeklyTargetState] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true); // Default true to avoid flash
+  // Hydrate synchronously from localStorage cache so the UI renders instantly
+  const cacheKey = (k: string) => user ? `cache:${user.id}:${k}` : `cache:anon:${k}`;
+  const readCache = <T,>(key: string, fallback: T): T => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      return raw ? (JSON.parse(raw) as T) : fallback;
+    } catch { return fallback; }
+  };
+
+  const [incomes, setIncomes] = useState<Income[]>(() => readCache(`cache:${user?.id ?? 'anon'}:incomes`, []));
+  const [expenses, setExpenses] = useState<Expense[]>(() => readCache(`cache:${user?.id ?? 'anon'}:expenses`, []));
+  const [taxRate, setTaxRateState] = useState<number>(() => readCache(`cache:${user?.id ?? 'anon'}:taxRate`, 20));
+  const [weeklyTarget, setWeeklyTargetState] = useState<number>(() => readCache(`cache:${user?.id ?? 'anon'}:weeklyTarget`, 0));
+  // Only "loading" when we have no cached data to show; otherwise revalidate silently in background
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !user) return false;
+    return !localStorage.getItem(`cache:${user.id}:incomes`);
+  });
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(() =>
+    readCache(`cache:${user?.id ?? 'anon'}:onboarded`, true)
+  );
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
 
-  // Load data from Supabase when user is authenticated
+  // Persist to cache whenever data changes
+  useEffect(() => {
+    if (!user) return;
+    try {
+      localStorage.setItem(cacheKey('incomes'), JSON.stringify(incomes));
+      localStorage.setItem(cacheKey('expenses'), JSON.stringify(expenses));
+      localStorage.setItem(cacheKey('taxRate'), JSON.stringify(taxRate));
+      localStorage.setItem(cacheKey('weeklyTarget'), JSON.stringify(weeklyTarget));
+      localStorage.setItem(cacheKey('onboarded'), JSON.stringify(hasCompletedOnboarding));
+    } catch {}
+  }, [user, incomes, expenses, taxRate, weeklyTarget, hasCompletedOnboarding]);
+
+  // Load data from Supabase when user is authenticated (revalidate in background)
   useEffect(() => {
     if (!user) {
       setIncomes([]);
@@ -75,8 +102,19 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // If we have cached data for this user, hydrate from it immediately and don't block UI
+    const hasCache = !!localStorage.getItem(cacheKey('incomes'));
+    if (hasCache) {
+      setIncomes(readCache(cacheKey('incomes'), []));
+      setExpenses(readCache(cacheKey('expenses'), []));
+      setTaxRateState(readCache(cacheKey('taxRate'), 20));
+      setWeeklyTargetState(readCache(cacheKey('weeklyTarget'), 0));
+      setHasCompletedOnboarding(readCache(cacheKey('onboarded'), true));
+      setLoading(false);
+    }
+
     const loadData = async () => {
-      setLoading(true);
+      if (!hasCache) setLoading(true);
       try {
         // Load incomes (only non-archived)
         const { data: incomesData, error: incomesError } = await supabase
