@@ -11,7 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateFinancialReport } from '@/utils/pdfGenerator';
 import { EditIncomeDialog } from '@/components/EditIncomeDialog';
 import { EditExpenseDialog } from '@/components/EditExpenseDialog';
-import { formatAustraliaDate, toAustraliaTime } from '@/utils/timezone';
+import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from '@/utils/timezone';
+import { useMemo } from 'react';
 
 export default function TablePage() {
   const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, updateExpense } = useData();
@@ -86,6 +87,73 @@ export default function TablePage() {
         <Navigation />
 
         <div className="space-y-6">
+          {/* This Week - Daily Breakdown */}
+          {(() => {
+            const { start, end } = getAustraliaWeekBounds();
+            const startMs = start.getTime();
+            const endMs = end.getTime();
+            const weekIncomes = incomes.filter(i => {
+              const t = toAustraliaTime(i.date).getTime();
+              return t >= startMs && t <= endMs;
+            });
+            const byDate = new Map<string, typeof incomes>();
+            weekIncomes.forEach(i => {
+              const key = formatAustraliaDate(i.date, 'yyyy-MM-dd');
+              if (!byDate.has(key)) byDate.set(key, [] as any);
+              (byDate.get(key) as any).push(i);
+            });
+            const days: { date: string; label: string; weekday: string; total: number; count: number }[] = [];
+            for (let d = 0; d < 7; d++) {
+              const dayDate = new Date(startMs + d * 86400000);
+              const key = formatAustraliaDate(dayDate, 'yyyy-MM-dd');
+              const items = (byDate.get(key) as any) || [];
+              const total = items.reduce((s: number, i: any) =>
+                s + i.doordash + i.ubereats + i.didi + i.coles + i.tips, 0);
+              days.push({
+                date: key,
+                label: formatAustraliaDate(dayDate, 'MMM dd'),
+                weekday: formatAustraliaDate(dayDate, 'EEEE'),
+                total,
+                count: items.length,
+              });
+            }
+            const weekTotal = days.reduce((s, d) => s + d.total, 0);
+            return (
+              <Card className="rounded-2xl border-0 shadow-[var(--shadow)] overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-semibold text-foreground">This Week</CardTitle>
+                  <span className="text-sm font-semibold text-success">${weekTotal.toFixed(2)}</span>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto -mx-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-border/40">
+                          <TableHead className="text-[10px] uppercase tracking-wider">Day</TableHead>
+                          <TableHead className="text-[10px] uppercase tracking-wider">Date</TableHead>
+                          <TableHead className="text-right text-[10px] uppercase tracking-wider">Entries</TableHead>
+                          <TableHead className="text-right text-[10px] uppercase tracking-wider">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {days.map(d => (
+                          <TableRow key={d.date} className="border-border/20">
+                            <TableCell className="font-medium text-sm">{d.weekday}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{d.label}</TableCell>
+                            <TableCell className="text-right text-sm text-muted-foreground">{d.count}</TableCell>
+                            <TableCell className={`text-right font-semibold text-sm ${d.total > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+                              ${d.total.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* Income Table */}
           <Card className="rounded-2xl border-0 shadow-[var(--shadow)] overflow-hidden">
             <CardHeader>
