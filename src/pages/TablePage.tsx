@@ -11,7 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateFinancialReport } from '@/utils/pdfGenerator';
 import { EditIncomeDialog } from '@/components/EditIncomeDialog';
 import { EditExpenseDialog } from '@/components/EditExpenseDialog';
-import { formatAustraliaDate, toAustraliaTime } from '@/utils/timezone';
+import { formatAustraliaDate, toAustraliaTime, getAustraliaWeekBounds } from '@/utils/timezone';
+import { useMemo } from 'react';
 
 export default function TablePage() {
   const { incomes, expenses, loading, deleteIncome, deleteExpense, updateIncome, updateExpense } = useData();
